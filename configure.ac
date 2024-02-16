@@ -187,7 +187,7 @@ AC_ARG_ENABLE(internal-stackdepth,
 	AS_HELP_STRING([--enable-internal-stackdepth], [Specify number of internal stack frames (default is 3).]),
 	MPIP_INTERNAL_STACK_DEPTH=$enableval; 
     echo "Internal stacktrace depth is $MPIP_INTERNAL_STACK_DEPTH",
-	MPIP_INTERNAL_STACK_DEPTH=3,
+	MPIP_INTERNAL_STACK_DEPTH=4,
 )
 AC_DEFINE_UNQUOTED([MPIP_INTERNAL_STACK_DEPTH], [$MPIP_INTERNAL_STACK_DEPTH], [Number of internal stack frames])
 AC_SUBST(MPIP_INTERNAL_STACK_DEPTH)

@@ -20,7 +20,7 @@ docdir=@docdir@
 
 include Defs.mak
 
-.PHONY: default all clean api API shared proto cleanobjs test testing \
+.PHONY: default all clean api API shared proto cleanobjs \
         add_binutils_objs add_libunwind_objs TAGS cleanobjs distclean \
         lint indent proto install merged-install install-api install-bin \
         install-all
@@ -202,12 +202,8 @@ add_libunwind_objs:
 TAGS: ${SRCS}
 	etags $^
 
-test testing:
-	$(MAKE) -C testing
-
 clean::
 	rm -f TAGS tags
-	$(MAKE) -C testing clean
 
 include $(srcdir)/Rules.mak
 
@@ -237,11 +233,11 @@ ${API_OBJS} : mpiPconfig.h mpiPi.h codect_proto.h
 endif
 
 install:: ${SHARED_C_TARGET} ${DEMANGLE_TARGET} ${FORTRAN_TARGET} 
-	mkdir -p ${DESTDIR}${libdir} ${DESTDIR}${docdir}
+	mkdir -p ${DESTDIR}${libdir} ${DESTDIR}${docdir} ${DESTDIR}${includedir}
 	${INSTALL} ${SHARED_C_TARGET} ${DESTDIR}${libdir}/${SHARED_C_TARGET}
+	${INSTALL} codect-API.h ${DESTDIR}${includedir}
 	if test "x${DEMANGLE_TARGET}" != "x" ; then ${INSTALL} ${DEMANGLE_TARGET} ${DESTDIR}${libdir}/${DEMANGLE_TARGET} ; fi
 	if test "x${FORTRAN_TARGET}" != "x" ; then ${INSTALL} ${FORTRAN_TARGET} ${DESTDIR}${libdir}/${FORTRAN_TARGET} ; fi
-	${INSTALL} doc/*md doc/*html doc/*pdf doc/README ${DESTDIR}${docdir} ; \
 
 install-api: API
 	mkdir -p ${DESTDIR}${libdir} ${DESTDIR}${includedir}/mpip_timers 

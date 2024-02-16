@@ -31,7 +31,7 @@ mpiPi_init (char *appName)
   mpiPi.inAPIrtb = 0;
   mpiPi.do_lookup = 1;
 
-  mpiPi.reportStackDepth = 1;
+  mpiPi.reportStackDepth = 8;
 
   mpiPi.internalStackDepth = MPIP_INTERNAL_STACK_DEPTH;
   mpiPi.fullStackDepth = mpiPi.reportStackDepth + mpiPi.internalStackDepth;
@@ -69,8 +69,12 @@ static int
 codecti_record_cs(struct callsite_stats **p) {
   int ret = 0;
   struct callsite_stats *call_stat;
-  void *call_stack[MPIP_CALLSITE_STACK_DEPTH_MAX] = { NULL };
   jmp_buf jb;
+  int stop = 0;
+
+  while(stop) {
+    sleep(1);
+  }
 
   call_stat = malloc(sizeof(struct callsite_stats));
   if (NULL == call_stat) {
@@ -81,8 +85,7 @@ codecti_record_cs(struct callsite_stats **p) {
   setjmp (jb);
   mpiPi.inAPIrtb = 1;		/*  Used to correctly identify caller FP  */
 
-  ret = mpiPi_RecordTraceBack (jb, call_stack, mpiPi.fullStackDepth);
-
+  ret = mpiPi_RecordTraceBack (jb, call_stat->pc, mpiPi.fullStackDepth);
   mpiPi.inAPIrtb = 0;
 
 error:

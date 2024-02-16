@@ -93,9 +93,9 @@ mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
       funcLenMax = currlen > funcLenMax ? currlen : funcLenMax;
     }
 
-  fprintf (fp, "%3s %3s %-*s %5s %-*s %s\n",
-           "ID", "Lev", fileLenMax, "File/Address", "Line", funcLenMax,
-           "Parent_Funct", "MPI_Call");
+  fprintf (fp, "%3s %-*s %5s %-*s\n",
+           "Lev", fileLenMax, "File/Address", "Line", funcLenMax,
+           "Parent_Funct");
 
   j = 0;
   int frames_printed = 0;
@@ -105,14 +105,14 @@ mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
         stack_continue_flag == 1; j++)
     {
         //  May encounter multiple "mpiP-wrappers.c" filename frames
-        if ( strcmp(p->filename[j], "mpiP-wrappers.c") == 0 )
+        if ( strncmp(p->functname[j], "codect", strlen("codect")) == 0 )
             continue;
 
       if (p->lineno[j] == 0 &&
           (strcmp (p->filename[j], "[unknown]") == 0 ||
             strcmp (p->functname[j], "[unknown]") == 0))
         {
-          fprintf (fp, "%3d %-*s %-*s %s\n",
+          fprintf (fp, "%3d %-*s %-*s\n",
                     frames_printed,
                     fileLenMax + 6,
                     mpiP_format_address (p->pc[j], addr_buf),
@@ -121,7 +121,7 @@ mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
         }
       else
         {
-          fprintf (fp, "%3d %-*s %5d %-*s %s\n",
+          fprintf (fp, "%3d %-*s %5d %-*s\n",
                     frames_printed,
                     fileLenMax,
                     p->filename[j], p->lineno[j],
