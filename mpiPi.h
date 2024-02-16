@@ -22,8 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
-#include <sys/time.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "mpiPconfig.h"
@@ -32,81 +30,11 @@
 #include "bfd.h"
 #endif
 
-#if !defined(CEXTRACT) && !defined(ENABLE_API_ONLY)
-#include <mpi.h>
-#include "mpiPi_def.h"
-#endif
-
-#include "mpiP-hash.h"
 #include "mpiP-callsites.h"
-#include "mpiP-mt-stats.h"
-
-#include "mpip_timers.h"
 
 #define MPIPI_HOSTNAME_LEN_MAX 128
 
-#define MPIP_CALLSITE_STATS_COOKIE 518641
-#define MPIP_CALLSITE_STATS_COOKIE_ASSERT(f) {assert(MPIP_CALLSITE_STATS_COOKIE==((f)->cookie));}
-
-#ifdef USE_MPI3_CONSTS
-typedef const void mpip_const_void_t;
-typedef const int mpip_const_int_t;
-typedef const char mpip_const_char_t;
-typedef const MPI_Datatype mpip_const_datatype_t;
-#else
-typedef void mpip_const_void_t;
-typedef int mpip_const_int_t;
-typedef char mpip_const_char_t;
-#endif
-
 typedef char mpiPi_hostname_t[MPIPI_HOSTNAME_LEN_MAX];
-
-typedef struct callsite_src_id_cache_entry_t
-{
-  int id;			/* unique id for this src code/stack location */
-  int op;			/* at the lowest level, this is a MPI op */
-  char *filename[MPIP_CALLSITE_STACK_DEPTH_MAX];
-  char *functname[MPIP_CALLSITE_STACK_DEPTH_MAX];
-  int line[MPIP_CALLSITE_STACK_DEPTH_MAX];
-  void *pc[MPIP_CALLSITE_STACK_DEPTH_MAX];
-}
-callsite_src_id_cache_entry_t;
-
-extern h_t *callsite_src_id_cache;
-
-typedef struct _mpiPi_lookup_t
-{
-  int op;
-  char *name;
-}
-mpiPi_lookup_t;
-
-typedef struct _histogram_entry_t
-{
-  int op;
-  double time;
-  long count;
-  int comm_size_bin;
-  int data_size_bin;
-}
-mpiPi_histogram_entry_t;
-
-extern mpiPi_lookup_t mpiPi_lookup[];
-
-enum
-{ MPIP_MPI_TIME_FMT, MPIP_MPI_TIME_SUMMARY_FMT,
-  MPIP_AGGREGATE_TIME_FMT, MPIP_AGGREGATE_COV_TIME_FMT,
-  MPIP_AGGREGATE_MESS_FMT, MPIP_AGGREGATE_IO_FMT,
-  MPIP_CALLSITE_TIME_SUMMARY_FMT, MPIP_CALLSITE_TIME_RANK_FMT,
-  MPIP_CALLSITE_MESS_SUMMARY_FMT, MPIP_CALLSITE_MESS_RANK_FMT,
-  MPIP_CALLSITE_IO_SUMMARY_FMT, MPIP_CALLSITE_IO_RANK_FMT,
-  MPIP_CALLSITE_TIME_CONCISE_FMT, MPIP_CALLSITE_MESS_CONCISE_FMT,
-  MPIP_HISTOGRAM_FMT
-};
-
-typedef enum
-{ MPIP_REPORT_SCI_FORMAT, MPIP_REPORT_FLT_FORMAT }
-MPIP_REPORT_FORMAT_TYPE;
 
 #ifdef ENABLE_BFD
 typedef struct SO_INFO
@@ -121,84 +49,23 @@ typedef struct SO_INFO
 
 typedef struct _mpiPi_t
 {
-  int ac;
-  char *av[MPIP_COPIED_ARGS_MAX];
-  char *toolname;
   char *appName;
   char *appFullName;
-  char oFilename[256];
-  int tag;
-  int procID;
-  int rank;
-  int size;
-  int collectorRank;
-#ifndef ENABLE_API_ONLY
-  MPI_Comm comm;
-  mpiPi_hostname_t hostname;
-#endif
-  int hostnamelen;
-  char *outputDir;
-  char *envStr;
   FILE *stdout_;
   FILE *stderr_;
-
-  double cumulativeTime;	/* necessary for pcontrol */
-  time_t start_timeofday;
-  time_t stop_timeofday;
-
-  /* pcontrol */
-  int enabled;
-  int enabledCount;
-
-  mpiPi_TIMER timer;
-  mpiPi_hostname_t *global_task_hostnames;
-  double *global_task_app_time;
-  double *global_task_mpi_time;
-  double global_app_time;
-  double global_mpi_time;
-  double global_mpi_size;
-  double global_mpi_io;
-  double global_mpi_rma;
-  long long global_mpi_msize_threshold_count;
-  long long global_mpi_sent_count;
-  long long global_time_callsite_count;
-
-  int tableSize;
-  h_t *global_callsite_stats;
-  h_t *global_callsite_stats_agg;
-  h_t *global_MPI_stats_agg;
-
-  mpiPi_mt_stat_t task_stats;
-
-  mpiPi_lookup_t *lookup;
 
   int reportStackDepth;
   int internalStackDepth;
   int fullStackDepth;
-  double reportPrintThreshold;
   int baseNames;
-  MPIP_REPORT_FORMAT_TYPE reportFormat;
-  int calcCOV;
   int do_lookup;
   int inAPIrtb;
-  int messageCountThreshold;
   long text_start;
   int obj_mode;
-  int printRankInfo;
-  enum mpiPi_report_style
-  { mpiPi_style_verbose, mpiPi_style_concise, mpiPi_style_both } report_style;
-  int print_callsite_detail;
-  int collective_report;
 #ifdef SO_LOOKUP
   so_info_t **so_info;
   int so_count;
 #endif
-  int disable_finalize_report;
-
-  int do_collective_stats_report;
-  double coll_time_stats[MPIP_NFUNC][MPIP_COMM_HISTCNT][MPIP_SIZE_HISTCNT];
-  int do_pt2pt_stats_report;
-  double pt2pt_send_stats[MPIP_NFUNC][MPIP_COMM_HISTCNT][MPIP_SIZE_HISTCNT];
 }
 mpiPi_t;
 
@@ -211,11 +78,6 @@ extern char *mpiPi_vdate;
 extern char *mpiPi_vtime;
 
 extern int mpiPi_debug;
-extern int mpiPi_do_demangle;
-
-#ifdef HAVE_MPIR_TOPOINTER
-extern void *MPIR_ToPointer (int idx);
-#endif
 
 #if !defined(UNICOS_mp)
 
@@ -323,7 +185,7 @@ extern void *saved_ret_addr;
 #define min(x,y) ((x<y)?(x):(y))
 #define max(x,y) ((x>y)?(x):(y))
 
-#include "mpiPi_proto.h"
+#include "mpiPi_proto.h" // TODO: We need a prototype file with all the required APIs
 
 #endif
 

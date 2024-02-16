@@ -6,7 +6,7 @@
 
    -----
 
-   mpiPi.c -- main mpiP internal functions
+   diag_msgs_api.c -- diagnostic routines, error logging, warning, etc
 
  */
 
@@ -14,149 +14,78 @@
 static char *svnid = "$Id$";
 #endif
 
-#include <string.h>
-#include <float.h>
-#include <unistd.h>
+#include <stdarg.h>
+
 #include "mpiPi.h"
 
-static void
-mpiPi_init (char *appName)
+void
+mpiPi_msg (char *fmt, ...)
 {
-  mpiPi.toolname = "CodeCT";
-  mpiPi.appName = strdup (appName);
-  mpiPi.stdout_ = stdout;
-  mpiPi.stderr_ = stderr;
-
-  mpiPi.baseNames = 1;
-  mpiPi.inAPIrtb = 0;
-  mpiPi.do_lookup = 1;
-
-  mpiPi.reportStackDepth = 1;
-
-  mpiPi.internalStackDepth = MPIP_INTERNAL_STACK_DEPTH;
-  mpiPi.fullStackDepth = mpiPi.reportStackDepth + mpiPi.internalStackDepth;
-  if ( mpiPi.fullStackDepth > MPIP_CALLSITE_STACK_DEPTH_MAX )
-      mpiPi.fullStackDepth = MPIP_CALLSITE_STACK_DEPTH_MAX;
-
-#ifdef SO_LOOKUP
-  mpiPi.so_info = NULL;
-#endif
-  mpiPi_msg_debug ("appName is %s\n", appName);
-  return;
+  va_list args;
+  FILE *fp = mpiPi.stdout_;
+  va_start (args, fmt);
+  fprintf (fp, "%s: ", mpiPi.toolname);
+  vfprintf (fp, fmt, args);
+  va_end (args);
+  fflush (fp);
 }
 
 void
-codecti_init(char **argv) {
-#if defined(Linux) && ! defined(ppc64)
-  mpiPi.appFullName = getProcExeLink ();
-  mpiPi_msg_debug ("appFullName is %s\n", mpiPi.appFullName);
-  mpiPi_init (GetBaseAppName (mpiPi.appFullName));
-#else
-  if (argv != NULL && *argv != NULL && **argv != NULL)
+mpiPi_abort (char *fmt, ...)
+{
+  va_list args;
+  FILE *fp = mpiPi.stderr_;
+  va_start (args, fmt);
+  fprintf (fp, "\n\n%s: ABORTING: ", mpiPi.toolname);
+  vfprintf (fp, fmt, args);
+  va_end (args);
+  fflush (fp);
+  abort ();
+}
+
+void
+mpiPi_msg_debug (char *fmt, ...)
+{
+  va_list args;
+  FILE *fp = mpiPi.stdout_;
+
+  if (mpiPi_debug <= 0)
+    return;
+
+  va_start (args, fmt);
+  fprintf (fp, "%s: DBG: ", mpiPi.toolname);
+  vfprintf (fp, fmt, args);
+  va_end (args);
+  fflush (fp);
+}
+
+void
+mpiPi_msg_debug0 (char *fmt, ...)
+{
+  va_list args;
+  FILE *fp = mpiPi.stdout_;
+  if (mpiPi.rank == 0)
     {
-      mpiPi_init (GetBaseAppName (**argv));
-      mpiPi.appFullName = strdup (**argv);
+      va_start (args, fmt);
+      fprintf (fp, "%s: ", mpiPi.toolname);
+      vfprintf (fp, fmt, args);
+      va_end (args);
+      fflush (fp);
     }
-  else
-    {
-      mpiPi_init ("Unknown");
-      mpiPi_msg_debug ("argv is NULL\n");
-    }
-#endif
-}
-
-static int
-codecti_record_cs(callsite_stats_t **p) {
-  int ret = 0;
-  callsite_stats_t *call_stat;
-  void *call_stack[MPIP_CALLSITE_STACK_DEPTH_MAX] = { NULL };
-  jmp_buf jb;
-
-  call_stat = malloc(sizeof(callsite_stats_t));
-  if (NULL == call_stat) {
-    ret = 1;
-    goto error;
-  }
-
-  setjmp (jb);
-  mpiPi.inAPIrtb = 1;		/*  Used to correctly identify caller FP  */
-
-  ret = mpiPi_RecordTraceBack (jb, call_stack, mpiPi.fullStackDepth);
-
-  mpiPi.inAPIrtb = 0;
-
-error:
-  *p = call_stat;
-  return ret;
-}
-
-int
-codecti_record(void **p) {
-  codecti_record_cs ((callsites_stats_t **) p);
-}
-
-static void
-codecti_resolve_cs(callsites_stats_t *p) {
-#ifdef ENABLE_BFD
-      if (mpiPi.appFullName != NULL)
-        {
-          if (open_bfd_executable (mpiPi.appFullName) == 0)
-            mpiPi.do_lookup = 0;
-        }
-#elif defined(USE_LIBDWARF)
-      if (mpiPi.appFullName != NULL)
-        {
-          if (open_dwarf_executable (mpiPi.appFullName) == 0)
-            mpiPi.do_lookup = 0;
-        }
-#endif
-#if defined(ENABLE_BFD) || defined(USE_LIBDWARF)
-      else
-        {
-          mpiPi_msg_warn
-              ("Failed to open executable.  The mpiP -x runtime flag may address this issue.\n");
-          mpiPi.do_lookup = 0;
-        }
-#endif
-
-  mpiPi_query_src (p);
-
-#ifdef ENABLE_BFD
-      if (mpiPi.appFullName != NULL)
-        {
-          if (close_bfd_executable () == 0)
-            mpiPi.do_lookup = 0;
-        }
-#elif defined(USE_LIBDWARF)
-      if (mpiPi.appFullName != NULL)
-        {
-          if (open_dwarf_executable () == 0)
-            mpiPi.do_lookup = 0;
-        }
-#endif
-
-  return 
 }
 
 void
-codecti_resolve (void *p) {
-  codecti_resolve_cs ((callsites_stats_t *) p);
+mpiPi_msg_warn (char *fmt, ...)
+{
+  va_list args;
+  FILE *fp = mpiPi.stderr_;
+  va_start (args, fmt);
+  fprintf (fp, "%s: WARNING: ", mpiPi.toolname);
+  vfprintf (fp, fmt, args);
+  va_end (args);
+  fflush (fp);
 }
 
-static void
-codecti_print_cs (callsites_stats_t *p) {
-  mpiPi_profile_print (mpiPi.stderr_, p);
-}
-
-void
-codecti_print (void *p) {
-  codecti_print_cs ((callsites_stats_t *) p);
-}
-
-void
-codecti_fini () {
-  return;
-}
 
 /*
 

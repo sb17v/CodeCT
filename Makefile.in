@@ -34,33 +34,22 @@ PC_LOOKUP_FILE=@PC_LOOKUP_FILE@
 PC_LOOKUP_OBJ = $(PC_LOOKUP_FILE:.c=.o)
 
 SRCS =	diag_msgs.c \
-	mpiP-hash.c \
 	mpiP-callsites.c \
-	mpiP-stats.c \
-	mpiP-mt-stats.c \
-	mpiP-tslist.c \
 	glob.c \
-	mpiP-wrappers.c \
-	wrappers_special.c \
 	mpiPi.c \
 	util.c \
-	lookup.c \
 	report.c \
-	pcontrol.c \
-	mpiP-API.c \
+	codect-API.c \
 	record_stack.c \
 	${PC_LOOKUP_FILE}
 
-API_SRCS =	diag_msgs_api.c \
-	mpiP-hash.c \
+API_SRCS =	diag_msgs.c \
 	mpiP-callsites.c \
-	mpiP-stats.c \
-	mpiP-mt-stats.c \
 	glob.c \
 	mpiPi.c \
 	util.c \
 	record_stack.c \
-	mpiP-API.c \
+	codect-API.c \
 	${PC_LOOKUP_FILE}
 
 OBJS  = $(SRCS:.c=.o)
