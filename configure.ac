@@ -246,17 +246,10 @@ AC_SUBST(HAVE_PYTHON)
 TEST_LIST=
 
 #  Test for available compilers
-C_IBM_MPI_WRAPPERS="mpixlc"
-C_INTEL_MPI_WRAPPERS="mpiicc"
-CXX_IBM_MPI_WRAPPERS="mpixlC"
-CXX_INTEL_MPI_WRAPPERS="mpiicpc"
-F77_IBM_MPI_WRAPPERS="mpixlf"
-F77_INTEL_MPI_WRAPPERS="mpiifort"
-
 if test "$ENABLE_API_ONLY" = no ; then
   AC_CHECK_PROGS(CC, xlc gcc cc icc, cc)
-  AC_CHECK_PROGS(CXX, xlC c++ g++ CC cxx icc, CC)
-  AC_CHECK_PROGS(F77, xlf f77 g77 pgf77 fort ifc, f77)
+  AC_CHECK_PROGS(CXX, xlC c++ g++ CC cxx icc, c++)
+  AC_CHECK_PROGS(F77, xlf f77 g77 pgf77 fort ifc, gfortran)
 fi
 
 AC_CHECK_LIB(m,sqrt)
@@ -270,11 +263,6 @@ else
   PIC_FLAGS="-fpic -DPIC"
 fi
 AC_MSG_RESULT($PIC_FLAGS)
-
-#  Check for MPI, but also define AC_CHECK_DECL macro, since the next use
-#  would be within the bfd tests, making AC_CHECK_DECL undefined if not
-#  checking for bfd.
-AC_CHECK_DECL(MPI_Init,,AC_MSG_ERROR(["Failed to find declaration for MPI_Init!"]),[#include "mpi.h"])
 
 SOURCE_LOOKUP=none
 
@@ -543,7 +531,7 @@ if test "x${slibdir}" = x ; then
 fi
 AC_SUBST(slibdir)
 
-AC_CONFIG_FILES([Defs.mak Makefile testing/Makefile Check.mak mpi.protos.txt get_fortran_arg.f])
+AC_CONFIG_FILES([Defs.mak Makefile Check.mak get_fortran_arg.f])
 AC_OUTPUT
 
 #  

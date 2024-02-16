@@ -37,6 +37,7 @@ extern void mpiPi_msg_debug0 (char *fmt, ...);
 extern char *mpiP_format_address (void *pval, char *addr_buf);
 extern char *GetBaseAppName (char *rawName);
 extern char *getProcExeLink (void);
+extern void mpiPi_profile_print (FILE * fp, void *p);
 
 /* PC lookup */
 extern char *mpiPdemangle (const char *mangledSym);

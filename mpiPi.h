@@ -49,6 +49,7 @@ typedef struct SO_INFO
 
 typedef struct _mpiPi_t
 {
+  char *toolname;
   char *appName;
   char *appFullName;
   FILE *stdout_;
@@ -185,7 +186,7 @@ extern void *saved_ret_addr;
 #define min(x,y) ((x<y)?(x):(y))
 #define max(x,y) ((x>y)?(x):(y))
 
-#include "mpiPi_proto.h" // TODO: We need a prototype file with all the required APIs
+#include "codect_proto.h" // TODO: We need a prototype file with all the required APIs
 
 #endif
 

@@ -24,22 +24,12 @@
  * ============================================================================
  */
 
-typedef struct callsite_cache_entry_t
-{
-  void *pc;
-  char *filename;
-  char *functname;
-  int line;
-}
-callsite_pc_cache_entry_t;
-
 static int
 mpiPi_query_pc (void *pc, char **filename, char **functname, int *lineno)
 {
   int rc = 0;
   char addr_buf[24];
 
-  key.pc = pc;
 #if defined(ENABLE_BFD) || defined(USE_LIBDWARF)
   if (mpiP_find_src_loc (pc, filename, lineno, functname) == 0)
     {
@@ -61,12 +51,12 @@ mpiPi_query_pc (void *pc, char **filename, char **functname, int *lineno)
                         mpiP_format_address (pc, addr_buf));
       *filename = strdup ("[unknown]");
       *functname = strdup ("[unknown]");
-      *line = 0;
+      *lineno = 0;
     }
 #else /* ! ENABLE_BFD || USE_LIBDWARF */
   *filename = strdup ("[unknown]");
   *functname = strdup ("[unknown]");
-  *line = 0;
+  *lineno = 0;
 #endif
 
   if (*lineno == 0)

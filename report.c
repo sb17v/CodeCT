@@ -70,7 +70,6 @@ mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
 {
   int i, ac;
   char buf[256];
-  callsite_src_id_cache_entry_t **av;
   int fileLenMax = 18;
   int funcLenMax = 24;
   int stack_continue_flag;
@@ -83,23 +82,22 @@ mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
   print_section_heading (fp, buf);
 
   /* Find longest file and function names for formatting */
-    int j, currlen;
-    for (j = 0;
-          (j < mpiPi.fullStackDepth) && (p->filename[j] != NULL);
-          j++)
-      {
-        currlen = strlen (p->filename[j]);
-        fileLenMax = currlen > fileLenMax ? currlen : fileLenMax;
-        currlen = strlen (p->functname[j]);
-        funcLenMax = currlen > funcLenMax ? currlen : funcLenMax;
-      }
+  int j, currlen;
+  for (j = 0;
+        (j < mpiPi.fullStackDepth) && (p->filename[j] != NULL);
+        j++)
+    {
+      currlen = strlen (p->filename[j]);
+      fileLenMax = currlen > fileLenMax ? currlen : fileLenMax;
+      currlen = strlen (p->functname[j]);
+      funcLenMax = currlen > funcLenMax ? currlen : funcLenMax;
+    }
 
   fprintf (fp, "%3s %3s %-*s %5s %-*s %s\n",
            "ID", "Lev", fileLenMax, "File/Address", "Line", funcLenMax,
            "Parent_Funct", "MPI_Call");
 
-  int j;
-  char * display_op = NULL;
+  j = 0;
   int frames_printed = 0;
 
   for (j = 0, stack_continue_flag = 1;
@@ -110,33 +108,25 @@ mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
         if ( strcmp(p->filename[j], "mpiP-wrappers.c") == 0 )
             continue;
 
-        if ( NULL == display_op)
-            display_op = &(mpiPi.lookup[p->op - mpiPi_BASE].name[4]);
-
-
-      if (p->line[j] == 0 &&
+      if (p->lineno[j] == 0 &&
           (strcmp (p->filename[j], "[unknown]") == 0 ||
             strcmp (p->functname[j], "[unknown]") == 0))
         {
-          fprintf (fp, "%3d %3d %-*s %-*s %s\n",
-                    p->id,
+          fprintf (fp, "%3d %-*s %-*s %s\n",
                     frames_printed,
                     fileLenMax + 6,
                     mpiP_format_address (p->pc[j], addr_buf),
                     funcLenMax,
-                    p->functname[j],
-                    display_op);
+                    p->functname[j]);
         }
       else
         {
-          fprintf (fp, "%3d %3d %-*s %5d %-*s %s\n",
-                    p->id,
+          fprintf (fp, "%3d %-*s %5d %-*s %s\n",
                     frames_printed,
                     fileLenMax,
-                    p->filename[j], p->line[j],
+                    p->filename[j], p->lineno[j],
                     funcLenMax,
-                    p->functname[j],
-                    display_op);
+                    p->functname[j]);
         }
       /*  Do not bother printing stack frames above main   */
       if (strcmp (p->functname[j], "main") == 0
@@ -144,18 +134,17 @@ mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
           || strcmp (p->functname[j], "MAIN__") == 0)
         stack_continue_flag = 0;
 
-      display_op = "";
       ++frames_printed;
     }
 }
 
 void
-mpiPi_profile_print (FILE * fp, callsite_stats_t *p)
+mpiPi_profile_print (FILE * fp, void *p)
 {
   assert (fp);
   assert (p);
 
-  mpiPi_print_callsites (fp, p);
+  mpiPi_print_callsites (fp, (callsite_stats_t *) p);
 }
 
 /* 

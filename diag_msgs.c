@@ -64,14 +64,12 @@ mpiPi_msg_debug0 (char *fmt, ...)
 {
   va_list args;
   FILE *fp = mpiPi.stdout_;
-  if (mpiPi.rank == 0)
-    {
-      va_start (args, fmt);
-      fprintf (fp, "%s: ", mpiPi.toolname);
-      vfprintf (fp, fmt, args);
-      va_end (args);
-      fflush (fp);
-    }
+  
+  va_start (args, fmt);
+  fprintf (fp, "%s: ", mpiPi.toolname);
+  vfprintf (fp, fmt, args);
+  va_end (args);
+  fflush (fp);
 }
 
 void

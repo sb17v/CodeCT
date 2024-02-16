@@ -66,13 +66,13 @@ codecti_init(char **argv) {
 }
 
 static int
-codecti_record_cs(callsite_stats_t **p) {
+codecti_record_cs(struct callsite_stats **p) {
   int ret = 0;
-  callsite_stats_t *call_stat;
+  struct callsite_stats *call_stat;
   void *call_stack[MPIP_CALLSITE_STACK_DEPTH_MAX] = { NULL };
   jmp_buf jb;
 
-  call_stat = malloc(sizeof(callsite_stats_t));
+  call_stat = malloc(sizeof(struct callsite_stats));
   if (NULL == call_stat) {
     ret = 1;
     goto error;
@@ -90,67 +90,67 @@ error:
   return ret;
 }
 
-int
+void
 codecti_record(void **p) {
-  codecti_record_cs ((callsites_stats_t **) p);
+  codecti_record_cs ((struct callsite_stats **) p);
 }
 
 static void
-codecti_resolve_cs(callsites_stats_t *p) {
+codecti_resolve_cs(struct callsite_stats *p) {
 #ifdef ENABLE_BFD
-      if (mpiPi.appFullName != NULL)
-        {
-          if (open_bfd_executable (mpiPi.appFullName) == 0)
-            mpiPi.do_lookup = 0;
-        }
+  if (mpiPi.appFullName != NULL)
+    {
+      if (open_bfd_executable (mpiPi.appFullName) == 0)
+        mpiPi.do_lookup = 0;
+    }
 #elif defined(USE_LIBDWARF)
-      if (mpiPi.appFullName != NULL)
-        {
-          if (open_dwarf_executable (mpiPi.appFullName) == 0)
-            mpiPi.do_lookup = 0;
-        }
+  if (mpiPi.appFullName != NULL)
+    {
+      if (open_dwarf_executable (mpiPi.appFullName) == 0)
+        mpiPi.do_lookup = 0;
+    }
 #endif
 #if defined(ENABLE_BFD) || defined(USE_LIBDWARF)
-      else
-        {
-          mpiPi_msg_warn
-              ("Failed to open executable.  The mpiP -x runtime flag may address this issue.\n");
-          mpiPi.do_lookup = 0;
-        }
+  else
+    {
+      mpiPi_msg_warn
+          ("Failed to open executable.  The mpiP -x runtime flag may address this issue.\n");
+      mpiPi.do_lookup = 0;
+    }
 #endif
 
   mpiPi_query_src (p);
 
 #ifdef ENABLE_BFD
-      if (mpiPi.appFullName != NULL)
-        {
-          if (close_bfd_executable () == 0)
-            mpiPi.do_lookup = 0;
-        }
+  if (mpiPi.appFullName != NULL)
+    {
+      close_bfd_executable();
+      mpiPi.do_lookup = 0;
+    }
 #elif defined(USE_LIBDWARF)
-      if (mpiPi.appFullName != NULL)
-        {
-          if (open_dwarf_executable () == 0)
-            mpiPi.do_lookup = 0;
-        }
+  if (mpiPi.appFullName != NULL)
+    {
+      close_dwarf_executable ();
+      mpiPi.do_lookup = 0;
+    }
 #endif
 
-  return 
+  return;
 }
 
 void
 codecti_resolve (void *p) {
-  codecti_resolve_cs ((callsites_stats_t *) p);
+  codecti_resolve_cs ((struct callsite_stats *) p);
 }
 
 static void
-codecti_print_cs (callsites_stats_t *p) {
+codecti_print_cs (struct callsite_stats *p) {
   mpiPi_profile_print (mpiPi.stderr_, p);
 }
 
 void
 codecti_print (void *p) {
-  codecti_print_cs ((callsites_stats_t *) p);
+  codecti_print_cs ((struct callsite_stats *) p);
 }
 
 void

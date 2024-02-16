@@ -5,7 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include "mpiPi.h"
-#include "mpiPi_proto.h"
+#include "codect_proto.h"
 #include "codect-API.h"
 
 void codect_init(char **argv) {
