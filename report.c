@@ -69,7 +69,6 @@ static void
 mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
 {
   int i, ac;
-  char buf[256];
   int fileLenMax = 18;
   int funcLenMax = 24;
   int stack_continue_flag;
@@ -79,7 +78,6 @@ mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
   if (mpiPi.reportStackDepth == 0)
     return;
 
-  print_section_heading (fp, buf);
 
   /* Find longest file and function names for formatting */
   int j, currlen;

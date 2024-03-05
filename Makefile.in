@@ -27,7 +27,7 @@ include Defs.mak
 
 default: @DEFAULT_TARGS@
 
-all: ${SHARED_C_TARGET} test
+all: ${SHARED_C_TARGET} ${C_TARGET}
 	@echo All done.
 
 PC_LOOKUP_FILE=@PC_LOOKUP_FILE@
@@ -133,9 +133,11 @@ install::
 	if [ -x ${SHARED_C_TARGET} ] ; then \
 	  mkdir -p ${DESTDIR}${slibdir} ; \
 	  ${INSTALL} ${SHARED_C_TARGET} ${DESTDIR}${slibdir} ; \
+	  ${INSTALL} ${C_TARGET} ${DESTDIR}${slibdir} ; \
 	fi
 clean::
 	rm -f ${SHARED_C_TARGET}
+	rm -f ${C_TARGET}
 
 ${SHARED_C_TARGET}: CFLAGS += @PIC_FLAGS@
 ${SHARED_C_TARGET}: ${OBJS}

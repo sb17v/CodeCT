@@ -178,7 +178,7 @@ AC_ARG_ENABLE(stackdepth,
 	AS_HELP_STRING([--enable-stackdepth], [Specify maximum report stacktrace depth (default is 8).]),
 	STACKDEPTH=$enableval; 
     echo "Maximum stacktrace depth is $STACKDEPTH",
-	STACKDEPTH=8,
+	STACKDEPTH=32,
 )
 AC_DEFINE_UNQUOTED([MPIP_CALLSITE_REPORT_STACK_DEPTH_MAX], [$STACKDEPTH], [Stack depth of callsites in report])
 AC_SUBST(MPIP_CALLSITE_REPORT_STACK_DEPTH_MAX)
@@ -247,6 +247,9 @@ TEST_LIST=
 
 #  Test for available compilers
 if test "$ENABLE_API_ONLY" = no ; then
+#  AC_CHECK_PROGS(CC, xlc gcc cc icc, mpicc)
+#  AC_CHECK_PROGS(CXX, xlC c++ g++ CC cxx icc, mpicxx)
+#  AC_CHECK_PROGS(F77, xlf f77 g77 pgf77 fort ifc, mpifort)
   AC_CHECK_PROGS(CC, xlc gcc cc icc, cc)
   AC_CHECK_PROGS(CXX, xlC c++ g++ CC cxx icc, c++)
   AC_CHECK_PROGS(F77, xlf f77 g77 pgf77 fort ifc, gfortran)

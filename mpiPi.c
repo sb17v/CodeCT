@@ -22,7 +22,6 @@ static char *svnid = "$Id$";
 static void
 mpiPi_init (char *appName)
 {
-  mpiPi.toolname = "CodeCT";
   mpiPi.appName = strdup (appName);
   mpiPi.stdout_ = stdout;
   mpiPi.stderr_ = stderr;
@@ -31,7 +30,7 @@ mpiPi_init (char *appName)
   mpiPi.inAPIrtb = 0;
   mpiPi.do_lookup = 1;
 
-  mpiPi.reportStackDepth = 8;
+  mpiPi.reportStackDepth = 32;
 
   mpiPi.internalStackDepth = MPIP_INTERNAL_STACK_DEPTH;
   mpiPi.fullStackDepth = mpiPi.reportStackDepth + mpiPi.internalStackDepth;
@@ -47,6 +46,7 @@ mpiPi_init (char *appName)
 
 void
 codecti_init(char **argv) {
+  mpiPi.toolname = "CodeCT";
 #if defined(Linux) && ! defined(ppc64)
   mpiPi.appFullName = getProcExeLink ();
   mpiPi_msg_debug ("appFullName is %s\n", mpiPi.appFullName);
@@ -70,11 +70,6 @@ codecti_record_cs(struct callsite_stats **p) {
   int ret = 0;
   struct callsite_stats *call_stat;
   jmp_buf jb;
-  int stop = 0;
-
-  while(stop) {
-    sleep(1);
-  }
 
   call_stat = malloc(sizeof(struct callsite_stats));
   if (NULL == call_stat) {
