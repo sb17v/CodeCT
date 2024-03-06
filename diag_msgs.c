@@ -1,13 +1,10 @@
 /* -*- C -*-
-
-   mpiP MPI Profiler ( http://llnl.github.io/mpiP )
-
    Please see COPYRIGHT AND LICENSE information at the end of this file.
 
    -----
 
    diag_msgs_api.c -- diagnostic routines, error logging, warning, etc
-
+   $Id$
  */
 
 #ifndef lint
@@ -16,27 +13,27 @@ static char *svnid = "$Id$";
 
 #include <stdarg.h>
 
-#include "mpiPi.h"
+#include "codecti.h"
 
 void
-mpiPi_msg (char *fmt, ...)
+codecti_msg (char *fmt, ...)
 {
   va_list args;
-  FILE *fp = mpiPi.stdout_;
+  FILE *fp = codecti.stdout_;
   va_start (args, fmt);
-  fprintf (fp, "%s: ", mpiPi.toolname);
+  fprintf (fp, "%s: ", codecti.toolname);
   vfprintf (fp, fmt, args);
   va_end (args);
   fflush (fp);
 }
 
 void
-mpiPi_abort (char *fmt, ...)
+codecti_abort (char *fmt, ...)
 {
   va_list args;
-  FILE *fp = mpiPi.stderr_;
+  FILE *fp = codecti.stderr_;
   va_start (args, fmt);
-  fprintf (fp, "\n\n%s: ABORTING: ", mpiPi.toolname);
+  fprintf (fp, "\n\n%s: ABORTING: ", codecti.toolname);
   vfprintf (fp, fmt, args);
   va_end (args);
   fflush (fp);
@@ -44,41 +41,41 @@ mpiPi_abort (char *fmt, ...)
 }
 
 void
-mpiPi_msg_debug (char *fmt, ...)
+codecti_msg_debug (char *fmt, ...)
 {
   va_list args;
-  FILE *fp = mpiPi.stdout_;
+  FILE *fp = codecti.stdout_;
 
-  if (mpiPi_debug <= 0)
+  if (codect_debug <= 0)
     return;
 
   va_start (args, fmt);
-  fprintf (fp, "%s: DBG: ", mpiPi.toolname);
+  fprintf (fp, "%s: DBG: ", codecti.toolname);
   vfprintf (fp, fmt, args);
   va_end (args);
   fflush (fp);
 }
 
 void
-mpiPi_msg_debug0 (char *fmt, ...)
+codecti_msg_debug0 (char *fmt, ...)
 {
   va_list args;
-  FILE *fp = mpiPi.stdout_;
+  FILE *fp = codecti.stdout_;
   
   va_start (args, fmt);
-  fprintf (fp, "%s: ", mpiPi.toolname);
+  fprintf (fp, "%s: ", codecti.toolname);
   vfprintf (fp, fmt, args);
   va_end (args);
   fflush (fp);
 }
 
 void
-mpiPi_msg_warn (char *fmt, ...)
+codecti_msg_warn (char *fmt, ...)
 {
   va_list args;
-  FILE *fp = mpiPi.stderr_;
+  FILE *fp = codecti.stderr_;
   va_start (args, fmt);
-  fprintf (fp, "%s: WARNING: ", mpiPi.toolname);
+  fprintf (fp, "%s: WARNING: ", codecti.toolname);
   vfprintf (fp, fmt, args);
   va_end (args);
   fflush (fp);

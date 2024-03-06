@@ -34,9 +34,9 @@ PC_LOOKUP_FILE=@PC_LOOKUP_FILE@
 PC_LOOKUP_OBJ = $(PC_LOOKUP_FILE:.c=.o)
 
 SRCS =	diag_msgs.c \
-	mpiP-callsites.c \
+	codect-callsites.c \
 	glob.c \
-	mpiPi.c \
+	codecti.c \
 	util.c \
 	report.c \
 	codect-API.c \
@@ -44,9 +44,9 @@ SRCS =	diag_msgs.c \
 	${PC_LOOKUP_FILE}
 
 API_SRCS =	diag_msgs.c \
-	mpiP-callsites.c \
+	codect-callsites.c \
 	glob.c \
-	mpiPi.c \
+	codecti.c \
 	util.c \
 	record_stack.c \
 	codect-API.c \
@@ -56,13 +56,6 @@ OBJS  = $(SRCS:.c=.o)
 FOBJS = $(OBJS)
 
 API_OBJS = $(API_SRCS:.c=.o)
-
-FORTRAN_GETARG_OBJ_FILE=@FORTRAN_GETARG_OBJ_FILE@
-FOBJS += $(FORTRAN_GETARG_OBJ_FILE)
-
-clean::
-	rm -f $(FORTRAN_GETARG_OBJ_FILE)
-
 
 #  If using BFD and need a separate demangling library,
 #  defensively rebuild pc_lookup.o for each target
@@ -229,9 +222,9 @@ endif
 .NOTPARALLEL:
 
 ifeq ($(ENABLE_API_ONLY), no)
-${OBJS}: mpiPconfig.h mpiPi.h codect_proto.h
+${OBJS}: codect-config.h codecti.h codect_proto.h
 else
-${API_OBJS} : mpiPconfig.h mpiPi.h codect_proto.h
+${API_OBJS} : codect-config.h codecti.h codect_proto.h
 endif
 
 install:: ${SHARED_C_TARGET} ${DEMANGLE_TARGET} ${FORTRAN_TARGET} 
@@ -283,8 +276,6 @@ lint: ${SRCS}
 	${LINT} -Dlint -I. ${CFLAGS} ${CPPFLAGS} ${MPIINC} -c ${SRCS}
 
 distclean: clean
-	rm -f Makefile Defs.mak Check.mak config.log config.status libmpiP* get_fortran_arg.f
-
-include Check.mak
+	rm -f Makefile Defs.mak config.log config.status libmpiP*
 
 ##### EOF

@@ -1,19 +1,13 @@
 /* -*- C -*- 
-
-   mpiP MPI Profiler ( http://llnl.github.io/mpiP )
-
    Please see COPYRIGHT AND LICENSE information at the end of this file.
 
    ----- 
 
-   mpiPi.h -- internal mpiP header
-
-   $Id$
-
+   codecti.h
 */
 
-#ifndef _MPIPI_H
-#define _MPIPI_H
+#ifndef _CODECTI_H
+#define _CODECTI_H
 
 #include <assert.h>
 #include <malloc.h>
@@ -24,13 +18,14 @@
 #include <strings.h>
 #include <unistd.h>
 
-#include "mpiPconfig.h"
+#include "codect-config.h"
 
 #ifdef ENABLE_BFD
 #include "bfd.h"
 #endif
 
-#include "mpiP-callsites.h"
+#include "codect-hash.h"
+#include "codect-callsites.h"
 
 #define MPIPI_HOSTNAME_LEN_MAX 128
 
@@ -47,7 +42,7 @@ typedef struct SO_INFO
 } so_info_t;
 #endif
 
-typedef struct _mpiPi_t
+typedef struct _codecti_t
 {
   char *toolname;
   char *appName;
@@ -63,22 +58,38 @@ typedef struct _mpiPi_t
   int inAPIrtb;
   long text_start;
   int obj_mode;
+  int tableSize;
+  int use_pc_cache;
 #ifdef SO_LOOKUP
   so_info_t **so_info;
   int so_count;
 #endif
-}
-mpiPi_t;
+} codecti_t;
 
-extern mpiPi_t mpiPi;
+extern codecti_t codecti;
 
-extern int mpiPi_vmajor;
-extern int mpiPi_vminor;
-extern int mpiPi_vpatch;
-extern char *mpiPi_vdate;
-extern char *mpiPi_vtime;
+extern int codecti_vmajor;
+extern int codecti_vminor;
+extern int codecti_vpatch;
+extern char *codecti_vdate;
+extern char *codecti_vtime;
 
-extern int mpiPi_debug;
+extern int codect_debug;
+
+extern h_t *callsite_pc_cache;
+extern h_t *callsite_src_id_cache;
+
+/* CodeCT internal functions */
+extern void codecti_init (char **argv);
+extern void codecti_record_callsite (struct callsite_stats **p);
+extern void codecti_resolve_callsite (struct callsite_stats *p);
+extern void codecti_print_callsite (struct callsite_stats *p);
+extern void codecti_free_callsite (struct callsite_stats *p);
+extern int  codecti_ht_insert_callsite (struct callsite_stats *p);
+extern void codecti_serialize_callsite (struct callsite_stats *p, void **start_p, size_t *len);
+extern void codecti_deserialize_callsite (void *start_p, size_t len, struct callsite_stats **p);
+extern void codecti_fini ();
+
 
 #if !defined(UNICOS_mp)
 

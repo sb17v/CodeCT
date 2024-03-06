@@ -1,13 +1,9 @@
 /* -*- C -*-
-
-   mpiP MPI Profiler ( http://llnl.github.io/mpiP )
-
    Please see COPYRIGHT AND LICENSE information at the end of this file.
 
    -----
 
-   mpiPi.c -- main mpiP internal functions
-
+   codecti.c
  */
 
 #ifndef lint
@@ -17,56 +13,58 @@ static char *svnid = "$Id$";
 #include <string.h>
 #include <float.h>
 #include <unistd.h>
-#include "mpiPi.h"
+#include "codecti.h"
 
 static void
-mpiPi_init (char *appName)
+_codecti_init (char *appName)
 {
-  mpiPi.appName = strdup (appName);
-  mpiPi.stdout_ = stdout;
-  mpiPi.stderr_ = stderr;
+  codecti.appName = strdup (appName);
+  codecti.stdout_ = stdout;
+  codecti.stderr_ = stderr;
 
-  mpiPi.baseNames = 1;
-  mpiPi.inAPIrtb = 0;
-  mpiPi.do_lookup = 1;
+  codecti.baseNames = 1;
+  codecti.inAPIrtb = 0;
+  codecti.do_lookup = 1;
 
-  mpiPi.reportStackDepth = 32;
+  codecti.tableSize = 256;
+  codecti.reportStackDepth = 32;
 
-  mpiPi.internalStackDepth = MPIP_INTERNAL_STACK_DEPTH;
-  mpiPi.fullStackDepth = mpiPi.reportStackDepth + mpiPi.internalStackDepth;
-  if ( mpiPi.fullStackDepth > MPIP_CALLSITE_STACK_DEPTH_MAX )
-      mpiPi.fullStackDepth = MPIP_CALLSITE_STACK_DEPTH_MAX;
-
+  codecti.internalStackDepth = CODECT_INTERNAL_STACK_DEPTH;
+  codecti.fullStackDepth = codecti.reportStackDepth + codecti.internalStackDepth;
+  if ( codecti.fullStackDepth > CODECT_CALLSITE_STACK_DEPTH_MAX )
+      codecti.fullStackDepth = CODECT_CALLSITE_STACK_DEPTH_MAX;
+  codecti.use_pc_cache = 1;
 #ifdef SO_LOOKUP
-  mpiPi.so_info = NULL;
+  codecti.so_info = NULL;
 #endif
-  mpiPi_msg_debug ("appName is %s\n", appName);
+  codecti_msg_debug ("appName is %s\n", appName);
   return;
 }
 
 void
 codecti_init(char **argv) {
-  mpiPi.toolname = "CodeCT";
+  codecti.toolname = "CodeCT";
 #if defined(Linux) && ! defined(ppc64)
-  mpiPi.appFullName = getProcExeLink ();
-  mpiPi_msg_debug ("appFullName is %s\n", mpiPi.appFullName);
-  mpiPi_init (GetBaseAppName (mpiPi.appFullName));
+  codecti.appFullName = codecti_get_proc_exe_link ();
+  codecti_msg_debug ("appFullName is %s\n", codecti.appFullName);
+  _codecti_init (codecti_get_base_app_name (codecti.appFullName));
 #else
   if (argv != NULL && *argv != NULL && **argv != NULL)
     {
-      mpiPi_init (GetBaseAppName (**argv));
-      mpiPi.appFullName = strdup (**argv);
+      _codecti_init (codecti_get_base_app_name (**argv));
+      codecti.appFullName = strdup (**argv);
     }
   else
     {
-      mpiPi_init ("Unknown");
-      mpiPi_msg_debug ("argv is NULL\n");
+      _codecti_init ("Unknown");
+      codecti_msg_debug ("argv is NULL\n");
     }
 #endif
+  codecti_cs_cache_init();
 }
 
-static int
-codecti_record_cs(struct callsite_stats **p) {
+void
+codecti_record_callsite (struct callsite_stats **p) {
   int ret = 0;
   struct callsite_stats *call_stat;
   jmp_buf jb;
@@ -76,83 +74,118 @@ codecti_record_cs(struct callsite_stats **p) {
     ret = 1;
     goto error;
   }
+  bzero(call_stat, sizeof(struct callsite_stats));
 
   setjmp (jb);
-  mpiPi.inAPIrtb = 1;		/*  Used to correctly identify caller FP  */
+  codecti.inAPIrtb = 1;		/*  Used to correctly identify caller FP  */
 
-  ret = mpiPi_RecordTraceBack (jb, call_stat->pc, mpiPi.fullStackDepth);
-  mpiPi.inAPIrtb = 0;
+  ret = codecti_RecordTraceBack (jb, call_stat->pc, codecti.fullStackDepth);
+  codecti.inAPIrtb = 0;
 
+  /* here pc traceback is recorded - set a flag to search and push in pc cache */
+  codecti.use_pc_cache = 1;
 error:
   *p = call_stat;
-  return ret;
+  // TODO: error handling
+  return;
 }
 
 void
-codecti_record(void **p) {
-  codecti_record_cs ((struct callsite_stats **) p);
-}
-
-static void
-codecti_resolve_cs(struct callsite_stats *p) {
+codecti_resolve_callsite (struct callsite_stats *p) {
 #ifdef ENABLE_BFD
-  if (mpiPi.appFullName != NULL)
+  if (codecti.appFullName != NULL)
     {
-      if (open_bfd_executable (mpiPi.appFullName) == 0)
-        mpiPi.do_lookup = 0;
+      if (open_bfd_executable (codecti.appFullName) == 0)
+        codecti.do_lookup = 0;
     }
 #elif defined(USE_LIBDWARF)
-  if (mpiPi.appFullName != NULL)
+  if (codecti.appFullName != NULL)
     {
-      if (open_dwarf_executable (mpiPi.appFullName) == 0)
-        mpiPi.do_lookup = 0;
+      if (open_dwarf_executable (codecti.appFullName) == 0)
+        codecti.do_lookup = 0;
     }
 #endif
 #if defined(ENABLE_BFD) || defined(USE_LIBDWARF)
   else
     {
-      mpiPi_msg_warn
-          ("Failed to open executable.  The mpiP -x runtime flag may address this issue.\n");
-      mpiPi.do_lookup = 0;
+      codecti_msg_warn
+          ("Failed to open executable.\n");
+      codecti.do_lookup = 0;
     }
 #endif
 
-  mpiPi_query_src (p);
+  codecti_query_src (p);
 
 #ifdef ENABLE_BFD
-  if (mpiPi.appFullName != NULL)
+  if (codecti.appFullName != NULL)
     {
       close_bfd_executable();
-      mpiPi.do_lookup = 0;
+      codecti.do_lookup = 0;
     }
 #elif defined(USE_LIBDWARF)
-  if (mpiPi.appFullName != NULL)
+  if (codecti.appFullName != NULL)
     {
       close_dwarf_executable ();
-      mpiPi.do_lookup = 0;
+      codecti.do_lookup = 0;
     }
 #endif
+  codecti.use_pc_cache = 0;
 
   return;
 }
 
 void
-codecti_resolve (void *p) {
-  codecti_resolve_cs ((struct callsite_stats *) p);
-}
-
-static void
-codecti_print_cs (struct callsite_stats *p) {
-  mpiPi_profile_print (mpiPi.stderr_, p);
+codecti_print_callsite (struct callsite_stats *p) {
+  codecti_profile_print (codecti.stderr_, p);
+  return;
 }
 
 void
-codecti_print (void *p) {
-  codecti_print_cs ((struct callsite_stats *) p);
+codecti_free_callsite (struct callsite_stats *p) {
+  free(p);
+  return;
+}
+
+int
+codecti_ht_insert_callsite (struct callsite_stats *p) {
+  if (codecti.use_pc_cache) {
+    return codecti_ht_insert_cs_src_id_cache(p);
+  } else {
+    return codecti_ht_insert_cs_pc_cache(p);
+  }
+}
+
+void
+codecti_serialize_callsite (struct callsite_stats *p, void **start_p, size_t *len) {
+  size_t serialized_data_sz = sizeof(struct callsite_stats);
+  void *serialized_data = (void *)malloc(serialized_data_sz); // Do we need this
+
+  memcpy(serialized_data, p, serialized_data_sz);
+  
+  *start_p = serialized_data;
+  *len = serialized_data_sz;
+  return;
+}
+
+void
+codecti_deserialize_callsite (void *start_p, size_t len, struct callsite_stats **p) {
+  void *cs = NULL;
+
+  assert (len == sizeof(struct callsite_stats));
+
+  cs = (void *)malloc(sizeof(struct callsite_stats));
+  memcpy(cs, start_p, len);
+  free(start_p);
+
+  *p = (struct callsite_stats *)cs;
+  return;
 }
 
 void
 codecti_fini () {
+  codecti_free_pc_cache();
+  codecti_free_src_id_cache();
+  codecti_cs_cache_fini();
   return;
 }
 

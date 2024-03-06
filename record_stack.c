@@ -1,14 +1,10 @@
 /* -*- C -*- 
-
-   mpiP MPI Profiler ( http://llnl.github.io/mpiP )
-
    Please see COPYRIGHT AND LICENSE information at the end of this file.
 
-   ----- 
+   -----
 
-   record_stack.c -- Implementations of mpiPi_RecordTraceBack 
-                       stack tracing function.
-
+   record_stack.c
+   $Id$
  */
 
 #ifndef lint
@@ -20,7 +16,7 @@ static char *svnid = "$Id$";
 #include <stdlib.h>
 #include <string.h>
 
-#include "mpiPi.h"
+#include "codecti.h"
 
 #ifdef OSF1
 #include <excpt.h>
@@ -35,7 +31,7 @@ static char *svnid = "$Id$";
 #ifdef HAVE_LIBUNWIND
 
 int
-mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
+codecti_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
 {
   int i, valid_cursor, parent_frame_start, frame_count = 0;
   unw_context_t uc;
@@ -53,13 +49,13 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
 
   if (unw_getcontext (&uc) != 0)
     {
-      mpiPi_msg_debug ("Failed unw_getcontext!\n");
+      codecti_msg_debug ("Failed unw_getcontext!\n");
       return frame_count;
     }
 
   if (unw_init_local (&cursor, &uc) != UNW_ESUCCESS)
     {
-      mpiPi_msg_debug
+      codecti_msg_debug
           ("Failed to initialize libunwind cursor with unw_init_local\n");
     }
   else
@@ -67,8 +63,8 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
       for (i = 0; i < parent_frame_start; i++)
         {
           if (unw_step (&cursor) < 1)
-            mpiPi_msg_debug
-                ("unw_step failed to step into mpiPi caller frame.\n");
+            codecti_msg_debug
+                ("unw_step failed to step into codecti caller frame.\n");
         }
 
       for (i = 0, valid_cursor = 1; i < max_back; i++)
@@ -79,7 +75,7 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
               if (unw_get_reg (&cursor, UNW_REG_IP, &pc) != UNW_ESUCCESS)
                 {
                   pc_array[i] = NULL;
-                  mpiPi_msg_debug ("unw_get_reg failed.\n");
+                  codecti_msg_debug ("unw_get_reg failed.\n");
                 }
               else
                 {
@@ -89,7 +85,7 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
           else
             {
               pc_array[i] = NULL;
-              mpiPi_msg_debug ("unw_step failed.\n");
+              codecti_msg_debug ("unw_step failed.\n");
               valid_cursor = 0;
             }
         }
@@ -101,7 +97,7 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
 #elif defined(OSF1)
 
 int
-mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
+codecti_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
 {
   int i, parent_frame_start, frame_count = 0;
   void *pc;
@@ -109,7 +105,7 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
 
   context = (PCONTEXT) jb;
 
-  if (mpiPi.inAPIrtb)		/*  API unwinds fewer frames  */
+  if (codecti.inAPIrtb)		/*  API unwinds fewer frames  */
     parent_frame_start = 1;
   else
     parent_frame_start = 2;
@@ -146,7 +142,7 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
    * of stack backtrace
    */
 int
-mpiPi_RecordTraceBack (void *pc, void *pc_array[], int max_back)
+codecti_RecordTraceBack (void *pc, void *pc_array[], int max_back)
 {
   pc_array[0] = (void *) ((char *) pc - 1);
   return 1;
@@ -157,9 +153,9 @@ mpiPi_RecordTraceBack (void *pc, void *pc_array[], int max_back)
 #include <execinfo.h>
 
 int
-mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
+codecti_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
 {
-  static void *temp_stack_trace[MPIP_CALLSITE_STACK_DEPTH_MAX];
+  static void *temp_stack_trace[CODECT_CALLSITE_STACK_DEPTH_MAX];
   int all_frame_count, user_frame_count;
   void **cp;
 
@@ -174,7 +170,7 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
 
   all_frame_count = backtrace (temp_stack_trace, max_back);
 
-  if (all_frame_count <= MPIP_INTERNAL_STACK_DEPTH)
+  if (all_frame_count <= CODECT_INTERNAL_STACK_DEPTH)
     return 0;
 
   memcpy(pc_array, temp_stack_trace+1, sizeof(void*)*(all_frame_count-1));
@@ -191,7 +187,7 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
 #elif defined(USE_SETJMP)
 
 int
-mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
+codecti_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
 {
   int i, frame_count = 0;
   void *fp, *lastfp;
@@ -200,7 +196,7 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
   /*  
      For standard mpiP, the current stack looks like:
 
-     mpiPi_RecordTraceBack
+     codecti_RecordTraceBack
      mpiPif_MPI_Send
      MPI_Send/F77_MPI_Send  <- setjmp called
      Application function
@@ -210,7 +206,7 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
 
      For the mpiP-API, the current stack looks like:
 
-     mpiPi_RecordTraceBack
+     codecti_RecordTraceBack
      mpiP_record_traceback  <- setjmp called
      Application function
      ...
@@ -230,7 +226,7 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
    */
   fp = NextFP (GetFP ());
 
-  if (!mpiPi.inAPIrtb)
+  if (!codecti.inAPIrtb)
     fp = NextFP (fp);
 
 #endif /* defined(UNICOS_mp) */
@@ -266,9 +262,9 @@ mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
 #else /* Could not identify stack tracing mechanism */
 
 int
-mpiPi_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
+codecti_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back)
 {
-  mpiPi_abort ("Failed to configure appropriate stack tracing mechanism.");
+  codecti_abort ("Failed to configure appropriate stack tracing mechanism.");
 }
 #endif
 

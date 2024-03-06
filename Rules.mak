@@ -1,5 +1,5 @@
-# Makefile for MPIP	-*-Makefile-*-
-# Please see license in doc/UserGuide.html
+# Makefile for CODECT	-*-Makefile-*-
+# Please see license in doc/UserGuide.html //TODO: create a userguide with license
 # $Id$
 
 .c.o:

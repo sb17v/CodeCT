@@ -1,5 +1,6 @@
-# mpiP 3.5
-A light-weight MPI profiler.
+# CodeCT 0.1
+Lightweight Code Callstack Tracing library
+//TODO: Fix this file
 
 ## Introduction
 mpiP is a light-weight profiling library for MPI applications. Because it only collects statistical information about MPI functions, mpiP generates considerably less overhead and much less data than tracing tools. All the information captured by mpiP is task-local. It only uses communication during report generation, typically at the end of the experiment, to merge results from all of the tasks into one output file.

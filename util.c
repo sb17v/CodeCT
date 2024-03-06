@@ -1,13 +1,10 @@
 /* -*- C -*- 
-
-   mpiP MPI Profiler ( http://llnl.github.io/mpiP )
-
    Please see COPYRIGHT AND LICENSE information at the end of this file.
 
    -----
 
    util.c -- misc util functions
-
+   $Id$
  */
 
 #ifndef lint
@@ -19,10 +16,10 @@ static char *svnid = "$Id$";
 #include <errno.h>
 #include <stdlib.h>
 
-#include "mpiPi.h"
+#include "codecti.h"
 
 char *
-GetBaseAppName (char *rawName)
+codecti_get_base_app_name (char *rawName)
 {
   char *cp;
 
@@ -42,7 +39,7 @@ GetBaseAppName (char *rawName)
 
 #ifdef Linux
 char *
-getProcExeLink ()
+codecti_get_proc_exe_link ()
 {
   int pid, exelen, insize = 256;
   char *inbuf = NULL, file[256];
@@ -52,7 +49,7 @@ getProcExeLink ()
   inbuf = malloc (insize);
   if (inbuf == NULL)
     {
-      mpiPi_abort ("unable to allocate space for full executable path.\n");
+      codecti_abort ("unable to allocate space for full executable path.\n");
     }
 
   exelen = readlink (file, inbuf, 256);
@@ -82,7 +79,7 @@ getProcExeLink ()
 #endif
 
 char *
-mpiP_format_address (void *pval, char *addr_buf)
+codecti_format_address (void *pval, char *addr_buf)
 {
   static int get_sys_info = 0;
   static int ptr_hex_chars = 0;

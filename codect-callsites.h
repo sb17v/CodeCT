@@ -1,76 +1,72 @@
-/*
-     Please see COPYRIGHT AND LICENSE information at the end of this file.
-  
-     ----- 
-  
-     codect_proto.h
+/* -*- C -*-
+   Please see COPYRIGHT AND LICENSE information at the end of this file.
+
+   -----
+
+   codect-callsites.h
 */
-#ifndef _CODECTPROTO_H
-#define _CODECTPROTO_H
 
-#include <setjmp.h>
+#ifndef CODECTCALLSITES_H
+#define CODECTCALLSITES_H
 
-/* DWARF and BFD */
-extern int open_dwarf_executable (char *fileName);
-extern void close_dwarf_executable (void);
-extern int open_bfd_executable (char *filename);
-extern void close_bfd_executable (void);
+#include "codect-config.h"
 
-/* diag_msgs */
-extern void codecti_msg (char *fmt, ...);
-extern void codecti_abort (char *fmt, ...);
-extern void codecti_msg_debug (char *fmt, ...);
-extern void codecti_msg_warn (char *fmt, ...);
-extern void codecti_msg_debug0 (char *fmt, ...);
+/* Callsite statistics */
+typedef struct callsite_stats
+{
+  void *pc[CODECT_CALLSITE_STACK_DEPTH_MAX];
+  char *filename[CODECT_CALLSITE_STACK_DEPTH_MAX];
+  char *functname[CODECT_CALLSITE_STACK_DEPTH_MAX];
+  int lineno[CODECT_CALLSITE_STACK_DEPTH_MAX];
+} callsite_stats_t;
 
-/* Utils */
-extern char *codecti_format_address (void *pval, char *addr_buf);
-extern char *codecti_get_base_app_name (char *rawName);
-extern char *codecti_get_proc_exe_link (void);
-extern void codecti_profile_print (FILE * fp, void *p);
+/* Cache init and free*/
+void codecti_cs_cache_init();
+int codecti_ht_insert_cs_pc_cache (struct callsite_stats *p);
+int codecti_ht_insert_cs_src_id_cache (struct callsite_stats *p);
+void codecti_free_pc_cache();
+void codecti_free_src_id_cache ();
+void codecti_cs_cache_fini();
 
-/* PC lookup */
-extern char *codecti_demangle (const char *mangledSym);
-extern int codecti_find_src_loc (void *i_addr_hex, char **o_file_str,
-                              int *o_lineno, char **o_funct_str);
-extern unsigned long long codecti_get_text_start (char *filename);
+/* Translate callstats record (the pc) to src file, line.
+ */
+int codecti_query_src (callsite_stats_t * p);
 
-/* Stack trace */
-#if defined(mips)
-extern int codecti_RecordTraceBack (void *pc, void *pc_array[], int max_back);
-#else
-extern int codecti_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back);
-#endif
+#endif // CODECTCALLSITES_H
 
-#endif
 /*
-  
+
   <license>
-  
-  Copyright (c) 2006, The Regents of the University of California. 
-  Produced at the Lawrence Livermore National Laboratory 
-  Written by Jeffery Vetter and Christopher Chambreau. 
-  UCRL-CODE-223450. 
-  All rights reserved. 
-   
-  This file is part of mpiP.  For details, see http://llnl.github.io/mpiP. 
-   
+
+  Copyright (c) 2006, The Regents of the University of California.
+  Produced at the Lawrence Livermore National Laboratory
+  Written by Jeffery Vetter and Christopher Chambreau.
+  UCRL-CODE-223450.
+  All rights reserved.
+
+  Copyright (c) 2019, Mellanox Technologies Inc.
+  Written by Artem Polyakov
+  All rights reserved.
+
+
+  This file is part of mpiP.  For details, see http://llnl.github.io/mpiP.
+
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are
   met:
-   
+
   * Redistributions of source code must retain the above copyright
   notice, this list of conditions and the disclaimer below.
-  
+
   * Redistributions in binary form must reproduce the above copyright
   notice, this list of conditions and the disclaimer (as noted below) in
   the documentation and/or other materials provided with the
   distribution.
-  
+
   * Neither the name of the UC/LLNL nor the names of its contributors
   may be used to endorse or promote products derived from this software
   without specific prior written permission.
-  
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -83,22 +79,22 @@ extern int codecti_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back);
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-   
-   
-  Additional BSD Notice 
-   
+
+
+  Additional BSD Notice
+
   1. This notice is required to be provided under our contract with the
   U.S. Department of Energy (DOE).  This work was produced at the
   University of California, Lawrence Livermore National Laboratory under
   Contract No. W-7405-ENG-48 with the DOE.
-   
+
   2. Neither the United States Government nor the University of
   California nor any of their employees, makes any warranty, express or
   implied, or assumes any liability or responsibility for the accuracy,
   completeness, or usefulness of any information, apparatus, product, or
   process disclosed, or represents that its use would not infringe
   privately-owned rights.
-   
+
   3.  Also, reference herein to any specific commercial products,
   process, or services by trade name, trademark, manufacturer or
   otherwise does not necessarily constitute or imply its endorsement,
@@ -107,7 +103,9 @@ extern int codecti_RecordTraceBack (jmp_buf jb, void *pc_array[], int max_back);
   herein do not necessarily state or reflect those of the United States
   Government or the University of California, and shall not be used for
   advertising or product endorsement purposes.
-  
+
   </license>
-  
+
 */
+
+/* EOF */

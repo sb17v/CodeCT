@@ -1,30 +1,27 @@
 /* -*- C -*- 
-
-   mpiP MPI Profiler ( http://llnl.github.io/mpiP )
-
    Please see COPYRIGHT AND LICENSE information at the end of this file.
 
    ----- 
 
    glob.c -- globals vars
-
+   $Id$
  */
 
 #ifndef lint
 static char *svnid = "$Id$";
 #endif
 
-#include "mpiPi.h"
+#include "codecti.h"
 
-mpiPi_t mpiPi;
+codecti_t codecti;
 
-int mpiPi_debug = 0;
+int codect_debug = 0;
 
-int mpiPi_vmajor = 3;
-int mpiPi_vminor = 5;
-int mpiPi_vpatch = 0;
-char *mpiPi_vdate = __DATE__;
-char *mpiPi_vtime = __TIME__;
+int codecti_vmajor = 0;
+int codecti_vminor = 1;
+int codecti_vpatch = 0;
+char *codecti_vdate = __DATE__;
+char *codecti_vtime = __TIME__;
 
 
 /* 

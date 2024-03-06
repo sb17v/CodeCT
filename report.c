@@ -1,13 +1,10 @@
 /* -*- C -*- 
-
-   mpiP MPI Profiler ( http://llnl.github.io/mpiP )
-
    Please see COPYRIGHT AND LICENSE information at the end of this file.
 
-   ----- 
+   -----
 
    report.c -- reporting functions
-
+   $Id$
 */
 
 #ifndef lint
@@ -23,50 +20,14 @@ static char *svnid = "$Id$";
 #include <string.h>
 #include <sys/stat.h>
 
-#include "mpiPi.h"
+#include "codecti.h"
 
 /*  Structure used to track callsite statistics for the detail
  *  sections of the concise report.
  *  */
 
-static void print_section_heading (FILE * fp, char *str);
-static void mpiPi_print_callsites (FILE * fp, callsite_stats_t *p);
-
 static void
-print_section_heading (FILE * fp, char *str)
-{
-  int slen;
-  int maxlen = 75;
-  assert (fp);
-  assert (str);
-  assert (maxlen > 0);
-
-  slen = 0;
-  for (; slen < maxlen; slen++)
-    {
-      fputc ('-', fp);
-    }
-  fprintf (fp, "\n");
-  slen = strlen (str);
-  fprintf (fp, "@--- %s ", str);
-  slen += 6;
-  for (; slen < maxlen; slen++)
-    {
-      fputc ('-', fp);
-    }
-  fprintf (fp, "\n");
-  slen = 0;
-  for (; slen < maxlen; slen++)
-    {
-      fputc ('-', fp);
-    }
-  fprintf (fp, "\n");
-}
-
-#include <stdarg.h>
-
-static void
-mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
+codecti_print_callsites (FILE * fp, callsite_stats_t *p)
 {
   int i, ac;
   int fileLenMax = 18;
@@ -75,14 +36,14 @@ mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
   char addr_buf[24];
 
   /*  If stack depth is 0, call sites are really just MPI calls */
-  if (mpiPi.reportStackDepth == 0)
+  if (codecti.reportStackDepth == 0)
     return;
 
 
   /* Find longest file and function names for formatting */
   int j, currlen;
   for (j = 0;
-        (j < mpiPi.fullStackDepth) && (p->filename[j] != NULL);
+        (j < codecti.fullStackDepth) && (p->filename[j] != NULL);
         j++)
     {
       currlen = strlen (p->filename[j]);
@@ -99,10 +60,10 @@ mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
   int frames_printed = 0;
 
   for (j = 0, stack_continue_flag = 1;
-        (frames_printed < mpiPi.reportStackDepth) && (p->filename[j] != NULL) &&
+        (frames_printed < codecti.reportStackDepth) && (p->filename[j] != NULL) &&
         stack_continue_flag == 1; j++)
     {
-        //  May encounter multiple "mpiP-wrappers.c" filename frames
+        //  May encounter multiple "codect*" filename frames
         if ( strncmp(p->functname[j], "codect", strlen("codect")) == 0 )
             continue;
 
@@ -113,7 +74,7 @@ mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
           fprintf (fp, "%3d %-*s %-*s\n",
                     frames_printed,
                     fileLenMax + 6,
-                    mpiP_format_address (p->pc[j], addr_buf),
+                    codecti_format_address (p->pc[j], addr_buf),
                     funcLenMax,
                     p->functname[j]);
         }
@@ -137,12 +98,12 @@ mpiPi_print_callsites (FILE * fp, callsite_stats_t *p)
 }
 
 void
-mpiPi_profile_print (FILE * fp, void *p)
+codecti_profile_print (FILE * fp, void *p)
 {
   assert (fp);
   assert (p);
 
-  mpiPi_print_callsites (fp, (callsite_stats_t *) p);
+  codecti_print_callsites (fp, (callsite_stats_t *) p);
 }
 
 /* 

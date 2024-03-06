@@ -1,4 +1,4 @@
-/* mpiPconfig.h.in.  Generated from configure.ac by autoheader.  */
+/* codect-config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* "Only build API" */
 #undef ENABLE_API_ONLY //TODO: clean it up at end
@@ -31,13 +31,13 @@
 #undef HAVE_LIBUNWIND
 
 /* Stack depth of callsites in report */
-#undef MPIP_CALLSITE_REPORT_STACK_DEPTH_MAX
+#undef CODECT_CALLSITE_REPORT_STACK_DEPTH_MAX
 
 /* Internal stack frames */
-#undef MPIP_INTERNAL_STACK_DEPTH
+#undef CODECT_INTERNAL_STACK_DEPTH
 
 /* Recorded stack depth of callsites */
-#undef MPIP_CALLSITE_STACK_DEPTH_MAX
+#undef CODECT_CALLSITE_STACK_DEPTH_MAX
 
 /* Need Real-time declaration */
 #undef NEED_MREAD_REAL_TIME_DECL

@@ -1,19 +1,14 @@
 /* -*- C -*- 
-
-   mpiP MPI Profiler ( http://llnl.github.io/mpiP )
-
    Please see COPYRIGHT AND LICENSE information at the end of this file.
 
    ----- 
 
    pc_lookup_dwarf.c -- functions that use libdwarf for symbol lookup
-
    $Id$
  */
 
 #ifndef lint
-static char *svnid =
-  "$Id$";
+static char *svnid = "$Id$";
 #endif
 
 
@@ -23,8 +18,8 @@ static char *svnid =
 #include <string.h>
 #include <fcntl.h>
 
-#include "mpiPi.h"
-#include "mpiPconfig.h"
+#include "codecti.h"
+#include "codect-config.h"
 
 #if defined(USE_LIBDWARF)
 
@@ -106,13 +101,13 @@ UniqueFileName_Get (const char *testFileName)
           malloc (sizeof (struct UniqueFileNameListNode));
       if (currInfo == NULL)
         {
-          mpiPi_abort ("malloc failed\n");
+          codecti_abort ("malloc failed\n");
         }
 
       currInfo->ufi.fileName = strdup (testFileName);
       if (currInfo->ufi.fileName == NULL)
         {
-          mpiPi_abort ("malloc failed\n");
+          codecti_abort ("malloc failed\n");
         }
 
       /* 
@@ -325,7 +320,7 @@ AddrRangeMap_Add (struct AddrRangeMap *map,
   struct AddrRangeMapNode *newEntry = NULL;
 
 
-  mpiPi_msg_debug ("AddrRangeMap::Add: [0x%016llx,0x%016llx]\n",
+  codecti_msg_debug ("AddrRangeMap::Add: [0x%016llx,0x%016llx]\n",
                    lowAddr, highAddr);
 
   /* build a new entry for this mapping */
@@ -334,7 +329,7 @@ AddrRangeMap_Add (struct AddrRangeMap *map,
 
   if (newEntry == NULL)
     {
-      mpiPi_abort ("malloc failed\n");
+      codecti_abort ("malloc failed\n");
     }
   newEntry->color = AddrRangeMapNodeColor_Red;
   assert (lowAddr <= highAddr);
@@ -392,7 +387,7 @@ AddrRangeMap_Add (struct AddrRangeMap *map,
           else
             {
               /* new range overlaps with our range! */
-              mpiPi_abort
+              codecti_abort
                   ("new address node range [0x%016llx,0x%016llx] overlaps our range [0x%016llx,0x%016llx]\n",
                    lowAddr, highAddr, currNode->lowAddr, currNode->highAddr);
             }
@@ -476,12 +471,12 @@ AddrRangeMap_Find (struct AddrRangeMap *map, void *addr)
   struct AddrRangeMapNode *currNode;
   const void *ret = NULL;
 
-  mpiPi_msg_debug ("AddrRangeMap::Find: looking for %p\n", addr);
+  codecti_msg_debug ("AddrRangeMap::Find: looking for %p\n", addr);
 
   currNode = map->root;
   while (currNode != NULL)
     {
-      mpiPi_msg_debug
+      codecti_msg_debug
           ("AddrRangeMap::Find: comparing with [0x%016llx,0x%016llx]\n",
            currNode->lowAddr, currNode->highAddr);
 
@@ -489,20 +484,20 @@ AddrRangeMap_Find (struct AddrRangeMap *map, void *addr)
         {
           /* target address is below range covered by current node */
           /* NOTE: we might not have a left child */
-          mpiPi_msg_debug ("AddrRangeMap::Find: going left\n");
+          codecti_msg_debug ("AddrRangeMap::Find: going left\n");
           currNode = currNode->leftChild;
         }
       else if (((Dwarf_Addr) addr) > currNode->highAddr)
         {
           /* target address is above range covered by current node */
           /* NOTE: we might not have a right child */
-          mpiPi_msg_debug ("AddrRangeMap::Find: going right\n");
+          codecti_msg_debug ("AddrRangeMap::Find: going right\n");
           currNode = currNode->rightChild;
         }
       else
         {
           /* target address falls within range of current node's statement */
-          mpiPi_msg_debug ("AddrRangeMap::Find: found\n");
+          codecti_msg_debug ("AddrRangeMap::Find: found\n");
           ret = currNode->info;
           break;
         }
@@ -548,7 +543,7 @@ AddrToSourceMap_Init (void)
     (struct AddrRangeMap *) malloc (sizeof (struct AddrRangeMap));
   if (addrToSourceMap == NULL)
     {
-      mpiPi_abort ("malloc failed\n");
+      codecti_abort ("malloc failed\n");
     }
   AddrRangeMap_Init (addrToSourceMap);
 }
@@ -576,13 +571,13 @@ AddrToSourceMap_Add (Dwarf_Addr addr,
       (struct AddrToSourceInfo *) malloc (sizeof (struct AddrToSourceInfo));
       if (newEntry == NULL)
         {
-          mpiPi_abort ("malloc failed\n");
+          codecti_abort ("malloc failed\n");
         }
       newEntry->fileName = UniqueFileName_Get (fileName);
       assert (newEntry->fileName != NULL);
       newEntry->lineNumber = lineNumber;
 
-      mpiPi_msg_debug ("AddrToSourceMap::Add: 0x%016llx => %s: %d\n",
+      codecti_msg_debug ("AddrToSourceMap::Add: 0x%016llx => %s: %d\n",
                        addr, newEntry->fileName, newEntry->lineNumber);
 
 
@@ -637,7 +632,7 @@ AddrToSourceMap_PatchRangesAux (struct AddrRangeMapNode *node,
    * limit our range according to our (possibly updated) idea of the
    * minimum address larger than our range.
    */
-  mpiPi_msg_debug
+  codecti_msg_debug
     ("AddrRangeMap::PatchRanges: resetting range from [0x%016llx,0x%016llx] to [0x%016llx,0x%016llx]\n",
      node->lowAddr, node->highAddr, node->lowAddr, (maxAddress - 1));
   node->highAddr = (maxAddress - 1);
@@ -700,7 +695,7 @@ FunctionMap_Init (void)
   functionMap = (struct AddrRangeMap *) malloc (sizeof (struct AddrRangeMap));
   if (functionMap == NULL)
     {
-      mpiPi_abort ("malloc failed\n");
+      codecti_abort ("malloc failed\n");
     }
   AddrRangeMap_Init (functionMap);
 }
@@ -735,16 +730,16 @@ FunctionMap_Add (const char *funcName,
     (struct FunctionInfo *) malloc (sizeof (struct FunctionInfo));
   if (newEntry == NULL)
     {
-      mpiPi_abort ("malloc failed\n");
+      codecti_abort ("malloc failed\n");
     }
 
-  mpiPi_msg_debug ("FunctionMap::Add: %s [0x%016llx,0x%016llx]\n",
+  codecti_msg_debug ("FunctionMap::Add: %s [0x%016llx,0x%016llx]\n",
                    funcName, lowAddress, highAddress);
 
   newEntry->name = strdup (funcName);
   if (newEntry->name == NULL)
     {
-      mpiPi_abort ("malloc failed\n");
+      codecti_abort ("malloc failed\n");
     }
 
   /* add the function to our ordered collection of functions */
@@ -787,20 +782,20 @@ HandleFunctionDIE (Dwarf_Debug dwHandle, Dwarf_Die currChildDIE)
                                 &funcName,
                                 &dw_err);
   if (dwDieNameRet != DW_DLV_OK)
-    mpiPi_msg_debug("Failed to get DIE name : %s\n", dwarf_errmsg(dw_err));
+    codecti_msg_debug("Failed to get DIE name : %s\n", dwarf_errmsg(dw_err));
 
   dwDieLowAddrRet = dwarf_lowpc (currChildDIE,
                                  &lowAddress,
                                  &dw_err);
   if (dwDieLowAddrRet != DW_DLV_OK)
-    mpiPi_msg_debug("Failed to get low PC : %s\n", dwarf_errmsg(dw_err));
+    codecti_msg_debug("Failed to get low PC : %s\n", dwarf_errmsg(dw_err));
 
   dwDieHighAddrRet = dwarf_highpc (currChildDIE,
                                    &highAddress,
                                    &dw_err);
 
   if (dwDieHighAddrRet != DW_DLV_OK)
-    mpiPi_msg_debug("Failed to get high PC : %s\n", dwarf_errmsg(dw_err));
+    codecti_msg_debug("Failed to get high PC : %s\n", dwarf_errmsg(dw_err));
 
   if ((dwDieNameRet == DW_DLV_OK) &&
       (dwDieLowAddrRet == DW_DLV_OK) && (dwDieHighAddrRet == DW_DLV_OK))
@@ -822,21 +817,21 @@ open_dwarf_executable (char *fileName)
   int dwStatus = -1;
 
 
-  mpiPi_msg_debug ("enter open_dwarf_executable\n");
+  codecti_msg_debug ("enter open_dwarf_executable\n");
   if (fileName == NULL)
     {
-      mpiPi_msg_warn ("Executable file name is NULL!\n");
-      mpiPi_msg_warn
+      codecti_msg_warn ("Executable file name is NULL!\n");
+      codecti_msg_warn
           ("If this is a Fortran application, you may be using the incorrect mpiP library.\n");
     }
 
   /* open the executable */
   assert (dwFd == -1);
-  mpiPi_msg_debug ("opening file %s\n", fileName);
+  codecti_msg_debug ("opening file %s\n", fileName);
   dwFd = open (fileName, O_RDONLY);
   if (dwFd == -1)
     {
-      mpiPi_msg_warn ("could not open file %s\n", fileName);
+      codecti_msg_warn ("could not open file %s\n", fileName);
       return 0;
     }
 
@@ -852,12 +847,12 @@ open_dwarf_executable (char *fileName)
     {
       close (dwFd);
       dwFd = -1;
-      mpiPi_abort ("could not initialize DWARF library : %s\n", dwarf_errmsg(dw_err));
+      codecti_abort ("could not initialize DWARF library : %s\n", dwarf_errmsg(dw_err));
     }
 
   if (dwStatus == DW_DLV_NO_ENTRY)
     {
-      mpiPi_msg_warn ("No symbols in the executable\n");
+      codecti_msg_warn ("No symbols in the executable\n");
       return 0;
     }
 
@@ -888,7 +883,7 @@ open_dwarf_executable (char *fileName)
         {
           if (dwStatus != DW_DLV_NO_ENTRY)
             {
-              mpiPi_abort ("failed to access next DWARF cu header : %s\n", dwarf_errmsg(dw_err));
+              codecti_abort ("failed to access next DWARF cu header : %s\n", dwarf_errmsg(dw_err));
             }
           break;
         }
@@ -899,7 +894,7 @@ open_dwarf_executable (char *fileName)
                                   &dw_err);	/* error object */
       if (dwStatus != DW_DLV_OK)
         {
-          mpiPi_abort ("failed to access first DWARF DIE : %s\n", dwarf_errmsg(dw_err));
+          codecti_abort ("failed to access first DWARF DIE : %s\n", dwarf_errmsg(dw_err));
         }
 
       /* get line number information for this compilation 
@@ -936,21 +931,21 @@ open_dwarf_executable (char *fileName)
                                            &dw_err);
 
               if (lineNoStatus != DW_DLV_OK)
-                mpiPi_msg_debug("Failed to get line number : %s\n", dwarf_errmsg(dw_err));
+                codecti_msg_debug("Failed to get line number : %s\n", dwarf_errmsg(dw_err));
 
               lineAddrStatus = dwarf_lineaddr (lineEntries[i],
                                                &lineAddress,
                                                &dw_err);
 
               if (lineAddrStatus != DW_DLV_OK)
-                mpiPi_msg_debug("Failed to get line address : %s\n", dwarf_errmsg(dw_err));
+                codecti_msg_debug("Failed to get line address : %s\n", dwarf_errmsg(dw_err));
 
               lineSrcFileStatus = dwarf_linesrc (lineEntries[i],
                                                  &lineSourceFile,
                                                  &dw_err);
 
               if (lineSrcFileStatus != DW_DLV_OK)
-                mpiPi_msg_debug("Failed to get source file status : %s\n", dwarf_errmsg(dw_err));
+                codecti_msg_debug("Failed to get source file status : %s\n", dwarf_errmsg(dw_err));
 
               if ((lineNoStatus == DW_DLV_OK) &&
                   (lineAddrStatus == DW_DLV_OK)
@@ -1014,7 +1009,7 @@ open_dwarf_executable (char *fileName)
         }
       else
         {
-          mpiPi_abort ("failed to obtain line info for the current DIE : %s\n", dwarf_errmsg(dw_err));
+          codecti_abort ("failed to obtain line info for the current DIE : %s\n", dwarf_errmsg(dw_err));
         }
 
       /* discover function information for the current compilation unit */
@@ -1032,11 +1027,11 @@ open_dwarf_executable (char *fileName)
         {
           // On some Cray systems, executables are linked with assembly compile units
           // with no functions.
-          // mpiPi_abort ("no child DIEs of compile unit DIE\n");
+          // codecti_abort ("no child DIEs of compile unit DIE\n");
         }
       else if (dwStatus != DW_DLV_OK)
         {
-          mpiPi_abort
+          codecti_abort
               ("failed to access first child DIE of compile unit DIE\n");
         }
 
@@ -1054,7 +1049,7 @@ open_dwarf_executable (char *fileName)
             }
           else
             {
-              mpiPi_abort ("unable to determine tag of current child DIE : %s \n", dwarf_errmsg(dw_err));
+              codecti_abort ("unable to determine tag of current child DIE : %s \n", dwarf_errmsg(dw_err));
             }
 
           /* advance to the next child DIE */
@@ -1068,7 +1063,7 @@ open_dwarf_executable (char *fileName)
             }
           else if (dwStatus != DW_DLV_NO_ENTRY)
             {
-              mpiPi_abort
+              codecti_abort
                   ("unable to access next child DIE of current compilation unit : %s\n", dwarf_errmsg(dw_err));
             }
 
@@ -1099,20 +1094,20 @@ close_dwarf_executable (void)
   int dwStatus = -1;
   Elf *elfHandle = NULL;
 
-  mpiPi_msg_debug ("enter close_dwarf_executable\n");
+  codecti_msg_debug ("enter close_dwarf_executable\n");
 
   assert (dwHandle != NULL);
   assert (dwFd != -1);
   dwStatus = dwarf_get_elf (dwHandle, &elfHandle, &dw_err);
   if (dwStatus != DW_DLV_OK)
     {
-      mpiPi_msg_debug ("dwarf_get_elf failed; ignoring : %s\n", dwarf_errmsg(dw_err));
+      codecti_msg_debug ("dwarf_get_elf failed; ignoring : %s\n", dwarf_errmsg(dw_err));
     }
 
   dwStatus = dwarf_finish (dwHandle, &dw_err);
   if (dwStatus != DW_DLV_OK)
     {
-      mpiPi_msg_debug ("dwarf_finish failed; ignoring : %s\n", dwarf_errmsg(dw_err));
+      codecti_msg_debug ("dwarf_finish failed; ignoring : %s\n", dwarf_errmsg(dw_err));
     }
   dwHandle = NULL;
 
@@ -1125,7 +1120,7 @@ close_dwarf_executable (void)
 
 
 int
-mpiP_find_src_loc (void *i_addr_hex,
+codecti_find_src_loc (void *i_addr_hex,
 		   char **o_file_str, int *o_lineno, char **o_funct_str)
 {
   const struct AddrToSourceInfo *addrToSrcMapping = NULL;
@@ -1150,7 +1145,7 @@ mpiP_find_src_loc (void *i_addr_hex,
       *o_file_str = addrToSrcMapping->fileName;
       *o_lineno = addrToSrcMapping->lineNumber;
 
-      if (mpiPi.baseNames == 0 && *o_file_str != NULL)
+      if (codecti.baseNames == 0 && *o_file_str != NULL)
         {
           char *h;
           h = strrchr (*o_file_str, '/');
@@ -1160,7 +1155,7 @@ mpiP_find_src_loc (void *i_addr_hex,
     }
   else
     {
-      mpiPi_msg_warn ("unable to find source line info for address 0x%p\n",
+      codecti_msg_warn ("unable to find source line info for address 0x%p\n",
                       i_addr_hex);
       /*
        * the rest of the mpiP code seems to expect that the filename
@@ -1177,8 +1172,8 @@ mpiP_find_src_loc (void *i_addr_hex,
     }
   else
     {
-      mpiPi_msg_warn ("unable to find function info for address %s\n",
-                      mpiP_format_address (i_addr_hex, addr_buf));
+      codecti_msg_warn ("unable to find function info for address %s\n",
+                      codecti_format_address (i_addr_hex, addr_buf));
     }
 
   return (((addrToSrcMapping != NULL) || (functionInfo != NULL)) ? 0 : 1);

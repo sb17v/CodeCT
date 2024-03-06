@@ -5,9 +5,9 @@ dnl These two lines disable the cache.
 define([AC_CACHE_LOAD], )
 define([AC_CACHE_SAVE], )
 
-AC_INIT([mpiP],[3.5])
+AC_INIT([CodeCT],[0.1])
 AC_PREREQ(2.61)
-AC_CONFIG_HEADER(mpiPconfig.h)
+AC_CONFIG_HEADER(codect-config.h)
 AC_CONFIG_AUX_DIR(bin)
 
 AC_CANONICAL_TARGET()
@@ -180,20 +180,20 @@ AC_ARG_ENABLE(stackdepth,
     echo "Maximum stacktrace depth is $STACKDEPTH",
 	STACKDEPTH=32,
 )
-AC_DEFINE_UNQUOTED([MPIP_CALLSITE_REPORT_STACK_DEPTH_MAX], [$STACKDEPTH], [Stack depth of callsites in report])
-AC_SUBST(MPIP_CALLSITE_REPORT_STACK_DEPTH_MAX)
+AC_DEFINE_UNQUOTED([CODECT_CALLSITE_REPORT_STACK_DEPTH_MAX], [$STACKDEPTH], [Stack depth of callsites in report])
+AC_SUBST(CODECT_CALLSITE_REPORT_STACK_DEPTH_MAX)
 
 AC_ARG_ENABLE(internal-stackdepth,
 	AS_HELP_STRING([--enable-internal-stackdepth], [Specify number of internal stack frames (default is 3).]),
-	MPIP_INTERNAL_STACK_DEPTH=$enableval; 
-    echo "Internal stacktrace depth is $MPIP_INTERNAL_STACK_DEPTH",
-	MPIP_INTERNAL_STACK_DEPTH=4,
+	CODECT_INTERNAL_STACK_DEPTH=$enableval; 
+    echo "Internal stacktrace depth is $CODECT_INTERNAL_STACK_DEPTH",
+	CODECT_INTERNAL_STACK_DEPTH=4,
 )
-AC_DEFINE_UNQUOTED([MPIP_INTERNAL_STACK_DEPTH], [$MPIP_INTERNAL_STACK_DEPTH], [Number of internal stack frames])
-AC_SUBST(MPIP_INTERNAL_STACK_DEPTH)
+AC_DEFINE_UNQUOTED([CODECT_INTERNAL_STACK_DEPTH], [$CODECT_INTERNAL_STACK_DEPTH], [Number of internal stack frames])
+AC_SUBST(CODECT_INTERNAL_STACK_DEPTH)
 
-AC_DEFINE([MPIP_CALLSITE_STACK_DEPTH_MAX], [(MPIP_CALLSITE_REPORT_STACK_DEPTH_MAX + MPIP_INTERNAL_STACK_DEPTH)], [Recorded stack depth of callsites])
-AC_SUBST(MPIP_CALLSITE_STACK_DEPTH_MAX)
+AC_DEFINE([CODECT_CALLSITE_STACK_DEPTH_MAX], [(CODECT_CALLSITE_REPORT_STACK_DEPTH_MAX + CODECT_INTERNAL_STACK_DEPTH)], [Recorded stack depth of callsites])
+AC_SUBST(CODECT_CALLSITE_STACK_DEPTH_MAX)
 
 PC_LOOKUP_FILE=pc_lookup.c
 AC_ARG_ENABLE(dwarf,
@@ -247,9 +247,6 @@ TEST_LIST=
 
 #  Test for available compilers
 if test "$ENABLE_API_ONLY" = no ; then
-#  AC_CHECK_PROGS(CC, xlc gcc cc icc, mpicc)
-#  AC_CHECK_PROGS(CXX, xlC c++ g++ CC cxx icc, mpicxx)
-#  AC_CHECK_PROGS(F77, xlf f77 g77 pgf77 fort ifc, mpifort)
   AC_CHECK_PROGS(CC, xlc gcc cc icc, cc)
   AC_CHECK_PROGS(CXX, xlC c++ g++ CC cxx icc, c++)
   AC_CHECK_PROGS(F77, xlf f77 g77 pgf77 fort ifc, gfortran)
@@ -453,7 +450,6 @@ AC_DEFINE_UNQUOTED([F77_SYMBOLS],[$F77_SYMBOLS], [F77 symbols])
 
 
 dnl ========== Identify F77 ==========
-FORTRAN_GETARG_OBJ_FILE=get_fortran_arg.o
 
 AC_MSG_CHECKING(fortran compiler)
 if $F77 -V 2>&1 | grep -e 'Portland Group' 1> /dev/null 2> /dev/null ; then
@@ -488,10 +484,7 @@ elif $F77 -V 2>&1 | grep -e Cray 1>/dev/null 2>/dev/null ; then
   F77_VENDOR=Cray
   FORTRAN_FLAG=-DCray_Fortran
   FORTRAN_TARGET=libmpiPftn.a
-  MPIPFLIB=mpiPftn 
-  if test "x$USE_GETARG" = xtrue ; then
-    FORTRAN_GETARG_OBJ_FILE=get_fortran_arg_pxf.o
-  fi
+  MPIPFLIB=mpiPftn
 elif $F77 -version 2>&1 | grep -e Compaq 1> /dev/null 2> /dev/null ; then
   F77_VENDOR=Compaq
   MPIPFLIB=mpiP
@@ -521,7 +514,6 @@ AC_SUBST(FORTRAN_STR_DECL, $FORTRAN_STR_DECL)
 AC_SUBST(ENABLE_BFD, $ENABLE_BFD)
 AC_SUBST(ENABLE_API_ONLY)
 AC_SUBST(DEFAULT_TARGS)
-AC_SUBST(FORTRAN_GETARG_OBJ_FILE)
 AC_SUBST(TEST_LIST)
 AC_SUBST(USE_BACKTRACE)
 AC_SUBST(USE_SETJMP)
@@ -534,7 +526,7 @@ if test "x${slibdir}" = x ; then
 fi
 AC_SUBST(slibdir)
 
-AC_CONFIG_FILES([Defs.mak Makefile Check.mak get_fortran_arg.f])
+AC_CONFIG_FILES([Defs.mak Makefile])
 AC_OUTPUT
 
 #  
