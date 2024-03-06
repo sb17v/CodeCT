@@ -27,9 +27,9 @@
 #include "codect-hash.h"
 #include "codect-callsites.h"
 
-#define MPIPI_HOSTNAME_LEN_MAX 128
+#define CODECTI_HOSTNAME_LEN_MAX 128
 
-typedef char mpiPi_hostname_t[MPIPI_HOSTNAME_LEN_MAX];
+typedef char mpiPi_hostname_t[CODECTI_HOSTNAME_LEN_MAX];
 
 #ifdef ENABLE_BFD
 typedef struct SO_INFO

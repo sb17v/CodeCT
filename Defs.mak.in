@@ -1,4 +1,4 @@
-# Makefile for MPIP	-*-Makefile-*-
+# Makefile for CODECT	-*-Makefile-*-
 # Please see license in doc/UserGuide.html
 # @configure_input@
 # $Id$
@@ -9,7 +9,6 @@ CXX	= @CXX@
 FC	= @F77@
 AR	= ar
 RANLIB	= @RANLIB@
-PYTHON  = @HAVE_PYTHON@
 
 CFLAGS = @CFLAGS@
 FFLAGS = @FFLAGS@
@@ -86,11 +85,11 @@ ifeq (${ARCH},x86_64)
 endif
 endif
 
-C_TARGET = libmpiP.a
-SHARED_C_TARGET = libmpiP.so
-API_TARGET = libmpiPapi.a
-MPIPLIB  = mpiP
-MPIPFLIB = mpiP
+C_TARGET = libcodeCT.a
+SHARED_C_TARGET = libcodeCT.so
+API_TARGET = libcodeCTapi.a
+CODECTLIB  = codeCT
+CODECTFLIB = codeCT
 
 BUILD_FLIB=false
 ifeq ($(USE_GETARG),true)
@@ -103,7 +102,7 @@ endif
 
 ifeq ($(BUILD_FLIB),true)
 FORTRAN_TARGET = @FORTRAN_TARGET@
-MPIPFLIB       = @MPIPFLIB@
+CODECTFLIB       = @CODECTFLIB@
 FORTRAN_FLAG   := $(FORTRAN_FLAG) @FORTRAN_FLAG@
 F77_VENDOR     = @F77_VENDOR@
 endif
@@ -111,7 +110,7 @@ endif
 DEMANGLE_TARGET =
 DO_DEMANGLE = @DO_DEMANGLE@
 ENABLE_BFD = @ENABLE_BFD@
-MPIPCXXLIB  = mpiP
+CODECTCXXLIB  = codeCT
 
 ifeq ($(ENABLE_BFD),yes)
 
@@ -120,14 +119,14 @@ ifeq ($(DO_DEMANGLE),GNU)
 endif
 ifeq ($(DO_DEMANGLE),IBM)
   DEMANGLE_FLAG = -DDEMANGLE_$(DO_DEMANGLE)
-  DEMANGLE_TARGET = libmpiPdmg.a
-  MPIPCXXLIB = mpiPdmg
+  DEMANGLE_TARGET = libcodeCTdmg.a
+  CODECTCXXLIB = codeCTdmg
   CPPFLAGS := -I/usr/include $(CPPFLAGS)
 endif
 ifeq ($(DO_DEMANGLE),Compaq)
   DEMANGLE_FLAG = -DDEMANGLE_$(DO_DEMANGLE)
-  DEMANGLE_TARGET = libmpiPdmg.a
-  MPIPCXXLIB = mpiPdmg
+  DEMANGLE_TARGET = libcodeCTdmg.a
+  CODECTCXXLIB = codeCTdmg
   CPPFLAGS := -I/usr/include $(CPPFLAGS)
   CXXLIBS += -lmld
 endif

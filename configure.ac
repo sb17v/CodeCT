@@ -16,7 +16,7 @@ AC_PREFIX_DEFAULT(".")
 cross_compiling=yes
 ac_tool_warned=yes
 echo
-echo "  Note: mpiP sets cross_compiling to yes to keep configure from failing in"
+echo "  Note: codeCT sets cross_compiling to yes to keep configure from failing in"
 echo "        the case where test executables would need to be run as a parallel job."
 echo
 
@@ -237,12 +237,6 @@ if test "x$AR" = "x"; then
    AR=ar
 fi
 
-AC_CHECK_PROGS(HAVE_PYTHON,[python python3 python2],[no])
-if test "x$HAVE_PYTHON" == "xno" ; then
-  AC_MSG_ERROR([Python is required to build mpiP.])
-fi
-AC_SUBST(HAVE_PYTHON)
-
 TEST_LIST=
 
 #  Test for available compilers
@@ -319,8 +313,8 @@ if test "x$DISABLE_LIBUNWIND" = "xno" ; then
 	AC_CHECK_HEADER(libunwind.h, AC_DEFINE([HAVE_LIBUNWIND],[1], [Have libunwind]) LIBS="$LIBS -lunwind" HAVE_LIBUNWIND=yes UNWIND_WITH=libunwind, 
 	[ if test x$build_cpu = xx86_64 ; then
 	  echo
-	  echo "  mpiP on x86_64 platforms requires libunwind."
-	  echo "  Please install libunwind and, if necessary, configure mpiP with "
+	  echo "  CodeCT on x86_64 platforms requires libunwind."
+	  echo "  Please install libunwind and, if necessary, configure CodeCT with "
     echo "  appropriate CFLAGS and LDFLAGS settings."
 	  echo
 	  exit 1
@@ -369,35 +363,6 @@ fail
               (AC_MSG_RESULT( no)) )
 #AC_SUBST(HAVE_ARM_LSE)
 fi
-
-#  If using Fortran routines to access command line,
-#  test whether get_command_argument is available, otherwise
-#  use getarg.
-FORTRAN_GETARG=""
-FORTRAN_GETARG_SRC_FILE=mpiP_getarg.f.part
-if test "$USE_GETARG" = true ; then
-     AC_LANG_PUSH(Fortran 77)
-     # Force Fortran compiler tests
-     AC_LINK_IFELSE(AC_LANG_PROGRAM(,,), , )
-     AC_MSG_CHECKING(fortran command-line argument functions)
-     AC_LINK_IFELSE(
-       [ AC_LANG_PROGRAM(, 
-              [[
-       integer len
-       character*10 val
-       call get_command_argument(0, val, len)]] ) ],
-	      AC_MSG_RESULT([using get_command_argument]) 
-                echo "       call get_command_argument(idx, buf, len)" > $FORTRAN_GETARG_SRC_FILE
-                FORTRAN_GETARG=$FORTRAN_GETARG_SRC_FILE,
-              AC_MSG_RESULT(using getarg) 
-	      echo "       call getarg(idx, buf)" > $FORTRAN_GETARG_SRC_FILE
-	      echo "       len = mpipi_get_strlen(buf)" >> $FORTRAN_GETARG_SRC_FILE
-	      FORTRAN_GETARG=$FORTRAN_GETARG_SRC_FILE
-              AC_SUBST_FILE(FORTRAN_GETARG)
-                )
-     AC_LANG_POP(Fortran 77)
-fi
-
 
 if test "$ENABLE_API_ONLY" = no ; then
 dnl ========== Find out how FORTRAN symbol names appear in C ==========
@@ -454,45 +419,45 @@ dnl ========== Identify F77 ==========
 AC_MSG_CHECKING(fortran compiler)
 if $F77 -V 2>&1 | grep -e 'Portland Group' 1> /dev/null 2> /dev/null ; then
   F77_VENDOR=PGI
-  MPIPFLIB=mpiPpgf
+  CODECTFLIB=codeCTpgf
   FORTRAN_FLAG=-DPGI
-  FORTRAN_TARGET=libmpiPpgf.a
+  FORTRAN_TARGET=libcodeCTpgf.a
 elif echo $F77 2>&1 | grep 'xlf' 1> /dev/null 2> /dev/null ; then
   F77_VENDOR=IBM
   if test "x$USE_GETARG" = xtrue ; then
-    MPIPFLIB=mpiPxlf
-    FORTRAN_TARGET=libmpiPxlf.a
+    CODECTFLIB=codeCTxlf
+    FORTRAN_TARGET=libcodeCTxlf.a
   else
-    MPIPFLIB=mpiP
+    CODECTFLIB=codeCT
   fi
 elif test "x$G77" = xyes ; then
   F77_VENDOR=GNU
   FORTRAN_FLAG=-DGNU_Fortran
-  FORTRAN_TARGET=libmpiPg77.a
-  MPIPFLIB=mpiPg77
+  FORTRAN_TARGET=libcodeCTg77.a
+  CODECTFLIB=codeCTg77
 elif $F77 -v 2>&1 | grep -e gcc 1> /dev/null 2> /dev/null ; then
   F77_VENDOR=GNU
   FORTRAN_FLAG=-DGNU_Fortran
-  FORTRAN_TARGET=libmpiPg77.a
-  MPIPFLIB=mpiPg77
+  FORTRAN_TARGET=libcodeCTg77.a
+  CODECTFLIB=codeCTg77
 elif $F77 -V 2>&1 | grep -e Intel 1> /dev/null 2> /dev/null ; then
   F77_VENDOR=Intel
   FORTRAN_FLAG=
   FORTRAN_TARGET=
-  MPIPFLIB=
+  CODECTFLIB=
 elif $F77 -V 2>&1 | grep -e Cray 1>/dev/null 2>/dev/null ; then
   F77_VENDOR=Cray
   FORTRAN_FLAG=-DCray_Fortran
-  FORTRAN_TARGET=libmpiPftn.a
-  MPIPFLIB=mpiPftn
+  FORTRAN_TARGET=libcodeCTftn.a
+  CODECTFLIB=codeCTftn
 elif $F77 -version 2>&1 | grep -e Compaq 1> /dev/null 2> /dev/null ; then
   F77_VENDOR=Compaq
-  MPIPFLIB=mpiP
+  CODECTFLIB=codeCT
   FORTRAN_FLAG=
   FORTRAN_TARGET=
 else
   F77_VENDOR=Unknown
-  MPIPFLIB=mpiP
+  CODECTFLIB=codeCT
   FORTRAN_FLAG=
   FORTRAN_TARGET=
 fi
@@ -507,7 +472,7 @@ fi #if test "$ENABLE_API_ONLY" = no ; then
 
 AC_MSG_RESULT($F77_VENDOR)
 AC_SUBST(F77_VENDOR,$F77_VENDOR)
-AC_SUBST(MPIPFLIB,$MPIPFLIB)
+AC_SUBST(CODECTFLIB,$CODECTFLIB)
 AC_SUBST(FORTRAN_FLAG,$FORTRAN_FLAG)
 AC_SUBST(FORTRAN_TARGET,$FORTRAN_TARGET)
 AC_SUBST(FORTRAN_STR_DECL, $FORTRAN_STR_DECL)
@@ -535,12 +500,11 @@ AC_OUTPUT
 
 echo
 echo "********************************************************************************"
-echo "  mpiP Configuration Summary"
+echo "  CodeCT Configuration Summary"
 echo
 echo "  C compiler               : ${CC}"
 echo "  C++ compiler             : ${CXX}"
 echo "  Fortran compiler         : ${F77}"
-echo "  Python                   : ${HAVE_PYTHON}"
 echo
 echo "  Stack Unwinding          : ${UNWIND_WITH}"
 echo "  Address to Source Lookup : ${SOURCE_LOOKUP}"

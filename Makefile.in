@@ -1,4 +1,4 @@
-# Makefile for MPIP	-*-Makefile-*-
+# Makefile for CODECT	-*-Makefile-*-
 # Please see license in doc/UserGuide.html
 # @configure_input@
 # $Id$
@@ -154,9 +154,9 @@ BFD_LIBS := ${BFD_LIBS} libintl.a
 endif
 
 add_binutils_objs:
-	-rm -rf mpip_temp_obj_dir
-	-mkdir mpip_temp_obj_dir
-	cd mpip_temp_obj_dir; \
+	-rm -rf codect_temp_obj_dir
+	-mkdir codect_temp_obj_dir
+	cd codect_temp_obj_dir; \
 	for lib in ${BFD_LIBS} ; do \
 	   ar -x ${BIN_TYPE_FLAG} ${BINUTILS_DIR}/${BINUTILS_LIB_DIR}/$${lib} ; \
 	done ; \
@@ -170,11 +170,11 @@ add_binutils_objs:
 	if [ "x${API_TARGET}" != "x" ]; then \
 	  ar -q ${BIN_TYPE_FLAG} ../${API_TARGET} *.o ; fi ; \
 	cd .. ; \
-rm -rf mpip_temp_obj_dir
+rm -rf codect_temp_obj_dir
 
 add_libunwind_objs:
-	-mkdir mpip_temp_obj_dir
-	cd mpip_temp_obj_dir ; \
+	-mkdir codect_temp_obj_dir
+	cd codect_temp_obj_dir ; \
 	cp ${libunwind_loc} ./${C_TARGET} ; \
 	ar x ../${C_TARGET} ; \
 	ar -q ${BIN_TYPE_FLAG} ./${C_TARGET} ./*.o ; \
@@ -192,7 +192,7 @@ add_libunwind_objs:
 	  ar -q ${BIN_TYPE_FLAG} ./${DEMANGLE_TARGET} ./*.o ; \
 	  mv ./${DEMANGLE_TARGET} .. ; fi ; \
 	cd .. ; \
-	rm -rf mpip_temp_obj_dir
+	rm -rf codect_temp_obj_dir
 
 TAGS: ${SRCS}
 	etags $^
@@ -217,7 +217,7 @@ ifeq ($(USE_SETJMP), yes)
   MAKE_WRAPPERS_ARGS += --usesetjmp
 endif
 
-#  Since mpiP needs to build wrappers and other files before building,
+#  Since CodeCT needs to build wrappers and other files before building,
 #  parallel builds tend to fail.
 .NOTPARALLEL:
 
@@ -235,14 +235,14 @@ install:: ${SHARED_C_TARGET} ${DEMANGLE_TARGET} ${FORTRAN_TARGET}
 	if test "x${FORTRAN_TARGET}" != "x" ; then ${INSTALL} ${FORTRAN_TARGET} ${DESTDIR}${libdir}/${FORTRAN_TARGET} ; fi
 
 install-api: API
-	mkdir -p ${DESTDIR}${libdir} ${DESTDIR}${includedir}/mpip_timers 
+	mkdir -p ${DESTDIR}${libdir} ${DESTDIR}${includedir}/codect_timers 
 	if test "x${API_TARGET}" != "x" ; then ${INSTALL} ${API_TARGET} ${DESTDIR}${libdir}/${API_TARGET} ; fi
 	${INSTALL} codect-API.h ${DESTDIR}${includedir}
-	${INSTALL} mpip_timers/*h ${DESTDIR}${includedir}/mpip_timers
+	${INSTALL} codect_timers/*h ${DESTDIR}${includedir}/codect_timers
 
 install-bin:
 	mkdir -p ${DESTDIR}${bindir}
-	${INSTALL} bin/*mpip* ${DESTDIR}${bindir} ; \
+	${INSTALL} bin/*codect* ${DESTDIR}${bindir} ; \
 
 install-all: install install-api install-bin 
 
@@ -250,7 +250,7 @@ merged-install: add_binutils_objs add_libunwind_objs install
 
 uninstall:
 	if [ ${prefix} != `pwd` -a ${prefix} != "." ] ; then \
-	rm -f ${DESTDIR}${bindir}/mpip-insert-src ${DESTDIR}${bindir}/mpirun-mpip ${DESTDIR}${bindir}/srun-mpip ; \
+	rm -f ${DESTDIR}${bindir}/codect-insert-src ${DESTDIR}${bindir}/mpirun-codect ${DESTDIR}${bindir}/srun-codect ; \
 	rm -f ${DESTDIR}${libdir}/${C_TARGET} ; \
 	if test "x${DEMANGLE_TARGET}" != "x" ; then rm -f ${DESTDIR}${libdir}/${DEMANGLE_TARGET} ; fi ; \
 	if test "x${FORTRAN_TARGET}" != "x" ; then rm -f ${DESTDIR}${libdir}/${FORTRAN_TARGET} ; fi ; \
@@ -276,6 +276,6 @@ lint: ${SRCS}
 	${LINT} -Dlint -I. ${CFLAGS} ${CPPFLAGS} ${MPIINC} -c ${SRCS}
 
 distclean: clean
-	rm -f Makefile Defs.mak config.log config.status libmpiP*
+	rm -f Makefile Defs.mak config.log config.status libcodeCT*
 
 ##### EOF
