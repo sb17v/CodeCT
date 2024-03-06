@@ -227,8 +227,9 @@ else
 ${API_OBJS} : codect-config.h codecti.h codect_proto.h
 endif
 
-install:: ${SHARED_C_TARGET} ${DEMANGLE_TARGET} ${FORTRAN_TARGET} 
+install:: ${SHARED_C_TARGET} ${C_TARGET} ${DEMANGLE_TARGET} ${FORTRAN_TARGET} 
 	mkdir -p ${DESTDIR}${libdir} ${DESTDIR}${docdir} ${DESTDIR}${includedir}
+	${INSTALL} ${C_TARGET} ${DESTDIR}${libdir}/${C_TARGET}
 	${INSTALL} ${SHARED_C_TARGET} ${DESTDIR}${libdir}/${SHARED_C_TARGET}
 	${INSTALL} codect-API.h ${DESTDIR}${includedir}
 	if test "x${DEMANGLE_TARGET}" != "x" ; then ${INSTALL} ${DEMANGLE_TARGET} ${DESTDIR}${libdir}/${DEMANGLE_TARGET} ; fi
