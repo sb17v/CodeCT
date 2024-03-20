@@ -46,10 +46,13 @@ codecti_print_callsites (FILE * fp, callsite_stats_t *p)
         (j < codecti.fullStackDepth) && (p->filename[j] != NULL);
         j++)
     {
-      currlen = strlen (p->filename[j]);
-      fileLenMax = currlen > fileLenMax ? currlen : fileLenMax;
-      currlen = strlen (p->functname[j]);
-      funcLenMax = currlen > funcLenMax ? currlen : funcLenMax;
+      if (NULL == p->pc[j]) {
+        break;
+      }
+        currlen = strlen (p->filename[j]);
+        fileLenMax = currlen > fileLenMax ? currlen : fileLenMax;
+        currlen = strlen (p->functname[j]);
+        funcLenMax = currlen > funcLenMax ? currlen : funcLenMax;
     }
 
   fprintf (fp, "%3s %-*s %5s %-*s\n",
@@ -63,9 +66,12 @@ codecti_print_callsites (FILE * fp, callsite_stats_t *p)
         (frames_printed < codecti.reportStackDepth) && (p->filename[j] != NULL) &&
         stack_continue_flag == 1; j++)
     {
+        if (NULL == p->pc[j]) {
+          break;
+        }
         //  May encounter multiple "codect*" filename frames
-        if ( strncmp(p->functname[j], "codect", strlen("codect")) == 0 )
-            continue;
+        // if ( strncmp(p->functname[j], "codect", strlen("codect")) == 0 )
+        //     continue;
 
       if (p->lineno[j] == 0 &&
           (strcmp (p->filename[j], "[unknown]") == 0 ||

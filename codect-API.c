@@ -65,7 +65,7 @@ void codect_deserialize_callsite(void *start_p, size_t len, codect_callsite_stat
 }
 
 void codect_free_callsite(codect_callsite_stats_h cs_h) {
-    codect_free_callsite((struct callsite_stats *) cs_h);
+    codecti_free_callsite((struct callsite_stats *) cs_h);
     return;
 }
 

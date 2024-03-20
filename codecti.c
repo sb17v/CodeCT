@@ -69,7 +69,7 @@ codecti_record_callsite (struct callsite_stats **p) {
   struct callsite_stats *call_stat;
   jmp_buf jb;
 
-  call_stat = malloc(sizeof(struct callsite_stats));
+  call_stat = calloc(1, sizeof(*call_stat));
   if (NULL == call_stat) {
     ret = 1;
     goto error;
@@ -149,35 +149,111 @@ codecti_free_callsite (struct callsite_stats *p) {
 int
 codecti_ht_insert_callsite (struct callsite_stats *p) {
   if (codecti.use_pc_cache) {
-    return codecti_ht_insert_cs_src_id_cache(p);
-  } else {
     return codecti_ht_insert_cs_pc_cache(p);
+  } else {
+    return codecti_ht_insert_cs_src_id_cache(p);
   }
 }
 
 void
 codecti_serialize_callsite (struct callsite_stats *p, void **start_p, size_t *len) {
-  size_t serialized_data_sz = sizeof(struct callsite_stats);
-  void *serialized_data = (void *)malloc(serialized_data_sz); // Do we need this
+  size_t serialized_data_sz = 0;
+  char *serialized_data = NULL, *temp = NULL;
+  int i;
 
-  memcpy(serialized_data, p, serialized_data_sz);
-  
-  *start_p = serialized_data;
+  /* determine length of total buffer after flattening everything */
+  for (i = 0; i < CODECT_CALLSITE_STACK_DEPTH_MAX; i++) {
+    if (NULL == p->pc[i]) {
+      break;
+    }
+    serialized_data_sz += sizeof(p->pc[i]);
+    serialized_data_sz += sizeof(size_t);
+    serialized_data_sz += strlen(p->filename[i]);
+    serialized_data_sz += sizeof(size_t);
+    serialized_data_sz += strlen(p->functname[i]);
+    serialized_data_sz += sizeof(p->lineno[i]);
+  }
+
+  /* Prepare the flatten buffer */  
+  serialized_data = (char *)calloc(1, serialized_data_sz);
+  temp = serialized_data;
+  for (i = 0; i < CODECT_CALLSITE_STACK_DEPTH_MAX; i++) {
+    size_t filename_len, functname_len;
+
+    if (NULL == p->pc[i]) {
+      break;
+    }
+    memcpy(temp, (char *)&p->pc[i], sizeof(p->pc[i]));
+    temp += sizeof(p->pc[i]);
+
+    filename_len = strlen(p->filename[i]);
+    memcpy(temp, (char *)&filename_len, sizeof(size_t));
+    temp += sizeof(size_t);
+
+    memcpy(temp, (char *)p->filename[i], strlen(p->filename[i]));
+    temp += strlen(p->filename[i]);
+
+    functname_len = strlen(p->functname[i]);
+    memcpy(temp, (char *)&functname_len, sizeof(size_t));
+    temp += sizeof(size_t);
+
+    memcpy(temp, (char *)p->functname[i], strlen(p->functname[i]));
+    temp += strlen(p->functname[i]);
+
+    memcpy(temp, (char *)&p->lineno[i], sizeof(p->lineno[i]));
+    temp += sizeof(p->lineno[i]);
+  }
+
+  *start_p = (void *)serialized_data;
   *len = serialized_data_sz;
   return;
 }
 
 void
 codecti_deserialize_callsite (void *start_p, size_t len, struct callsite_stats **p) {
-  void *cs = NULL;
+  struct callsite_stats *cs = NULL;
+  char *temp = NULL;
+  size_t temp_len = 0;
 
-  assert (len == sizeof(struct callsite_stats));
+  temp = start_p;
+  /* Reconstruct from serialized data */
+  cs = (struct callsite_stats *)calloc(1, sizeof(*cs));
+  for (int i = 0; i < CODECT_CALLSITE_STACK_DEPTH_MAX; i++) {
+    size_t filename_len, functname_len;
 
-  cs = (void *)malloc(sizeof(struct callsite_stats));
-  memcpy(cs, start_p, len);
-  free(start_p);
+    if (len == temp_len) {
+      break;
+    }
+    memcpy((char *)&cs->pc[i], temp, sizeof(cs->pc[i]));
+    temp += sizeof(cs->pc[i]);
+    temp_len += sizeof(cs->pc[i]);
 
-  *p = (struct callsite_stats *)cs;
+    memcpy((char *)&filename_len, temp, sizeof(size_t));
+    temp += sizeof(size_t);
+    temp_len += sizeof(size_t);
+    
+    cs->filename[i] = (char *)calloc(1, (filename_len + 1));
+    memcpy(cs->filename[i], temp, filename_len);
+    temp += filename_len;
+    temp_len += filename_len;
+    
+    memcpy((char *)&functname_len, temp, sizeof(size_t));
+    temp += sizeof(size_t);
+    temp_len += sizeof(size_t);
+
+    cs->functname[i] = (char *)calloc(1, (functname_len + 1));
+    memcpy(cs->functname[i], temp, functname_len);
+    temp += functname_len;
+    temp_len += functname_len;
+    
+    memcpy((char *)&cs->lineno[i], temp, sizeof(cs->lineno[i]));
+    temp += sizeof(cs->lineno[i]);
+    temp_len += sizeof(cs->lineno[i]);
+  }
+
+  assert(len == temp_len);
+
+  *p = cs;
   return;
 }
 

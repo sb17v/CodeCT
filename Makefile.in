@@ -35,6 +35,7 @@ PC_LOOKUP_OBJ = $(PC_LOOKUP_FILE:.c=.o)
 
 SRCS =	diag_msgs.c \
 	codect-callsites.c \
+	codect-hash.c \
 	glob.c \
 	codecti.c \
 	util.c \
@@ -45,6 +46,7 @@ SRCS =	diag_msgs.c \
 
 API_SRCS =	diag_msgs.c \
 	codect-callsites.c \
+	codect-hash.c \
 	glob.c \
 	codecti.c \
 	util.c \

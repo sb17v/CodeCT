@@ -38,13 +38,13 @@ callsite_pc_cache_comparator (const void *p1, const void *p2)
   callsite_pc_cache_entry_t *cs1 = (callsite_pc_cache_entry_t *) p1;
   callsite_pc_cache_entry_t *cs2 = (callsite_pc_cache_entry_t *) p2;
 
-  for (i = 0; i < codecti.fullStackDepth; i++)
+  for (i = 0; (i < codecti.fullStackDepth) && (cs1->pc[i] != NULL); i++)
   {
-    if ((long) cs1->pc > (long) cs2->pc)
+    if ((long) cs1->pc[i] > (long) cs2->pc[i])
   	{
   	  return 1;
   	}
-    if ((long) cs1->pc < (long) cs2->pc)
+    if ((long) cs1->pc[i] < (long) cs2->pc[i])
   	{
   	  return -1;
   	}
@@ -60,7 +60,8 @@ callsite_pc_cache_hashkey (const void *p1)
 {
   int i, res = 0;
   callsite_pc_cache_entry_t *cs1 = (callsite_pc_cache_entry_t *) p1;
-  for (i = 0; i < codecti.fullStackDepth; i++)
+
+  for (i = 0; (i < codecti.fullStackDepth) && (cs1->pc[i] != NULL); i++)
   {
     res ^= ((long) cs1->pc[i]);
   }
@@ -81,7 +82,7 @@ callsite_src_id_cache_comparator (const void *p1, const void *p2)
     }
   else
     {
-      for (i = 0; i < codecti.fullStackDepth; i++)
+      for (i = 0; (i < codecti.fullStackDepth) && (csp_1->filename[i] != NULL); i++)
         {
           if (csp_1->filename[i] != NULL && csp_2->filename[i] != NULL)
             {
@@ -117,7 +118,8 @@ callsite_src_id_cache_hashkey (const void *p1)
   int i, j;
   int res = 0;
   callsite_src_id_cache_entry_t *cs1 = (callsite_src_id_cache_entry_t *) p1;
-  for (i = 0; i < codecti.fullStackDepth; i++)
+
+  for (i = 0; (i < codecti.fullStackDepth) && (cs1->filename[i] != NULL); i++)
     {
       if (cs1->filename[i] != NULL)
         {
@@ -153,16 +155,16 @@ void codecti_cs_cache_init()
 
 int
 codecti_ht_insert_cs_pc_cache (struct callsite_stats *p) {
-  callsite_pc_cache_entry_t key;
+  callsite_pc_cache_entry_t key = {0};
   callsite_pc_cache_entry_t *csp;
   int i;
 
   // TODO: we just need pc list for pc cache
   // Check if initial implementation is working and then fix it
-  for (i = 0; i < codecti.fullStackDepth; i++) {
-    key.filename[i] = p->filename[i];
-    key.functname[i] = p->functname[i];
-    key.lineno[i] = p->lineno[i];
+  for (i = 0; (i < codecti.fullStackDepth) && (p->pc[i] != NULL); i++) {
+    // key.filename[i] = p->filename[i];
+    // key.functname[i] = p->functname[i];
+    // key.lineno[i] = p->lineno[i];
     key.pc[i] = p->pc[i]; // Only this field is relevent here
   }
 
@@ -171,13 +173,13 @@ codecti_ht_insert_cs_pc_cache (struct callsite_stats *p) {
     /* Allocate a new csp */
     csp =
         (callsite_pc_cache_entry_t *)
-        malloc (sizeof (callsite_pc_cache_entry_t));
+        calloc (1, sizeof (callsite_pc_cache_entry_t));
     bzero (csp, sizeof (callsite_pc_cache_entry_t));
 
-    for (i = 0; i < codecti.fullStackDepth; i++) {
-      csp->filename[i] = strdup (p->filename[i]);
-      csp->functname[i] = strdup (p->functname[i]);
-      csp->lineno[i] = p->lineno[i];
+    for (i = 0; (i < codecti.fullStackDepth) && (p->pc[i] != NULL); i++) {
+      // csp->filename[i] = strdup (p->filename[i]);
+      // csp->functname[i] = strdup (p->functname[i]);
+      // csp->lineno[i] = p->lineno[i];
       csp->pc[i] = p->pc[i];
     }
     /* Insert new csp */
@@ -191,27 +193,27 @@ codecti_ht_insert_cs_pc_cache (struct callsite_stats *p) {
 
 int
 codecti_ht_insert_cs_src_id_cache (struct callsite_stats *p) {
-  callsite_src_id_cache_entry_t key;
+  callsite_src_id_cache_entry_t key = {0};
   callsite_src_id_cache_entry_t *csp;
   int i;
 
-  for (i = 0; i < codecti.fullStackDepth; i++) {
+  for (i = 0; (i < codecti.fullStackDepth) && (p->filename[i] != NULL); i++) {
     key.filename[i] = p->filename[i];
     key.functname[i] = p->functname[i];
     key.lineno[i] = p->lineno[i];
     key.pc[i] = p->pc[i];
   }
 
-  if (h_search (callsite_pc_cache, &key, (void **) &csp) == NULL) {
+  if (h_search (callsite_src_id_cache, &key, (void **) &csp) == NULL) {
     /* key not found */
     /* Allocate a new csp */
     csp =
         (callsite_src_id_cache_entry_t *)
-        malloc (sizeof (callsite_src_id_cache_entry_t));
+        calloc (1, sizeof (callsite_src_id_cache_entry_t));
     bzero (csp, sizeof (callsite_src_id_cache_entry_t));
 
     /* Fill the csp */
-    for (i = 0; i < codecti.fullStackDepth; i++) {
+    for (i = 0; (i < codecti.fullStackDepth) && (p->filename[i] != NULL); i++) {
       csp->filename[i] = strdup (p->filename[i]);
       csp->functname[i] = strdup (p->functname[i]);
       csp->lineno[i] = p->lineno[i];
@@ -219,7 +221,7 @@ codecti_ht_insert_cs_src_id_cache (struct callsite_stats *p) {
     }
 
     /* Insert new csp */
-    h_insert (callsite_pc_cache, csp);
+    h_insert (callsite_src_id_cache, csp);
     return 1;
   } else {
     /* found the key */
