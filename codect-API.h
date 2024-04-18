@@ -9,17 +9,50 @@
 #ifndef _CODECTAPI_H
 #define _CODECTAPI_H
 
-typedef struct callsite_stats *codect_callsite_stats_h;
+#include "codect-config.h"
 
-void codect_init(char **argv); //TODO: do not pass argv, always resolve in Linux way
-void codect_record_callsite(codect_callsite_stats_h *cs_h);
-void codect_resolve_callsite(codect_callsite_stats_h cs_h);
-void codect_print_callsite(codect_callsite_stats_h cs_h);
-// Insert an element in hash-table, return 1/0 if not found(inserted)/found(not inserted)
-int codect_ht_insert_callsite(codect_callsite_stats_h cs_h);
-void codect_serialize_callsite(codect_callsite_stats_h cs_h, void **start_p, size_t *len);
-void codect_deserialize_callsite(void *start_p, size_t len, codect_callsite_stats_h *cs_h);
-void codect_free_callsite(codect_callsite_stats_h cs_h);
+/* Callsites */
+struct callsite_stats 
+{
+  void *pc[CODECT_CALLSITE_STACK_DEPTH_MAX];
+  char *filename[CODECT_CALLSITE_STACK_DEPTH_MAX];
+  char *functname[CODECT_CALLSITE_STACK_DEPTH_MAX];
+  int lineno[CODECT_CALLSITE_STACK_DEPTH_MAX];
+};
+
+typedef struct callsite_stats codect_pc_cs_t;
+typedef struct callsite_stats codect_src_cs_t;
+
+/* Hash table */
+typedef struct _h_t codect_pc_ht_t;
+typedef struct _h_t codect_src_ht_t;
+
+/* Callsite capture and tracking - fix them */
+void codect_init();
+void codect_record_callsite(codect_pc_cs_t *cs);
+void codect_resolve_callsite(codect_pc_cs_t *cs);
+void codect_print_callsite(codect_src_cs_t *cs);
 void codect_fini();
+
+/* Serialize & deserialize*/
+void codect_pc_cs_export(codect_pc_cs_t pc_cs, void **s_data, size_t *len);
+void codect_src_cs_import(void *s_data, size_t len, codect_src_cs_t *src_cs);
+
+/* Hashtable func */
+/* PC hashtable */
+void codect_pc_ht_init(codect_pc_ht_t **ht);
+codect_pc_cs_t *codect_pc_ht_search(codect_pc_ht_t *ht, codect_pc_cs_t pc_cs);
+void codect_copy_pc_cs(codect_pc_cs_t *new_cs, codect_pc_cs_t pc_cs);
+void codect_pc_ht_insert(codect_pc_ht_t *ht, codect_pc_cs_t *pc_cs);
+void codect_gather_pc_ht_data(codect_pc_ht_t *ht, int *count, void ***data);
+void codect_pc_ht_free(codect_pc_ht_t *ht);
+
+/* SRC hashtable*/
+void codect_src_ht_init(codect_src_ht_t **ht);
+codect_src_cs_t *codect_src_ht_search(codect_src_ht_t *ht, codect_src_cs_t src_cs);
+void codect_copy_src_cs(codect_src_cs_t *new_cs, codect_src_cs_t src_cs);
+void codect_src_ht_insert(codect_src_ht_t *ht, codect_src_cs_t *src_cs);
+void codect_gather_src_ht_data(codect_src_ht_t *ht, int *count, void ***data);
+void codect_src_ht_free(codect_src_ht_t *ht);
 
 #endif

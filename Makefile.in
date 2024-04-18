@@ -234,6 +234,7 @@ install:: ${SHARED_C_TARGET} ${C_TARGET} ${DEMANGLE_TARGET} ${FORTRAN_TARGET}
 	${INSTALL} ${C_TARGET} ${DESTDIR}${libdir}/${C_TARGET}
 	${INSTALL} ${SHARED_C_TARGET} ${DESTDIR}${libdir}/${SHARED_C_TARGET}
 	${INSTALL} codect-API.h ${DESTDIR}${includedir}
+	${INSTALL} codect-config.h ${DESTDIR}${includedir}
 	if test "x${DEMANGLE_TARGET}" != "x" ; then ${INSTALL} ${DEMANGLE_TARGET} ${DESTDIR}${libdir}/${DEMANGLE_TARGET} ; fi
 	if test "x${FORTRAN_TARGET}" != "x" ; then ${INSTALL} ${FORTRAN_TARGET} ${DESTDIR}${libdir}/${FORTRAN_TARGET} ; fi
 
@@ -241,7 +242,7 @@ install-api: API
 	mkdir -p ${DESTDIR}${libdir} ${DESTDIR}${includedir}/codect_timers 
 	if test "x${API_TARGET}" != "x" ; then ${INSTALL} ${API_TARGET} ${DESTDIR}${libdir}/${API_TARGET} ; fi
 	${INSTALL} codect-API.h ${DESTDIR}${includedir}
-	${INSTALL} codect_timers/*h ${DESTDIR}${includedir}/codect_timers
+	${INSTALL} codect-config.h ${DESTDIR}${includedir}
 
 install-bin:
 	mkdir -p ${DESTDIR}${bindir}
@@ -262,6 +263,7 @@ uninstall:
 	if test "x${SHARED_DEMANGLE_TARGET}" != "x" && test -e ${DESTDIR}${slibdir}/${SHARED_DEMANGLE_TARGET} ; then rm -f ${DESTDIR}${slibdir}/${SHARED_DEMANGLE_TARGET} ; fi ; \
 	rm -rf ${DESTDIR}${docdir} ; \
 	rm -f ${DESTDIR}${includedir}/codect-API.h ; \
+	rm -f ${DESTDIR}${includedir}/codect-config.h ; \
 	fi
 
 proto:

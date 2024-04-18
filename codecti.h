@@ -59,7 +59,6 @@ typedef struct _codecti_t
   long text_start;
   int obj_mode;
   int tableSize;
-  int use_pc_cache;
 #ifdef SO_LOOKUP
   so_info_t **so_info;
   int so_count;
@@ -76,20 +75,32 @@ extern char *codecti_vtime;
 
 extern int codect_debug;
 
-extern h_t *callsite_pc_cache;
-extern h_t *callsite_src_id_cache;
+typedef callsite_stats_t callsite_pc_cache_entry_t;
+typedef callsite_stats_t callsite_src_id_cache_entry_t;
 
 /* CodeCT internal functions */
-extern void codecti_init (char **argv);
-extern void codecti_record_callsite (struct callsite_stats **p);
-extern void codecti_resolve_callsite (struct callsite_stats *p);
-extern void codecti_print_callsite (struct callsite_stats *p);
-extern void codecti_free_callsite (struct callsite_stats *p);
-extern int  codecti_ht_insert_callsite (struct callsite_stats *p);
-extern void codecti_serialize_callsite (struct callsite_stats *p, void **start_p, size_t *len);
-extern void codecti_deserialize_callsite (void *start_p, size_t len, struct callsite_stats **p);
-extern void codecti_fini ();
+void codecti_init ();
+void codecti_record_callsite (callsite_stats_t *p);
+void codecti_resolve_callsite (callsite_stats_t *p);
+void codecti_print_callsite (struct callsite_stats *p);
+void codecti_fini ();
 
+void codecti_serialize_callsite (callsite_stats_t p, void **start_p, size_t *len);
+void codecti_deserialize_callsite (void *start_p, size_t len, callsite_stats_t *p);
+
+void codecti_copy_pc_cs(callsite_stats_t *new_cs, callsite_stats_t pc_cs);
+void codecti_copy_src_cs(callsite_stats_t *new_cs, callsite_stats_t src_cs);
+
+/* Hash table function */
+void codecti_pc_cs_cache_init(h_t **p);
+void codecti_src_cs_cache_init(h_t **p);
+void codecti_free_pc_cache(h_t *p);
+void codecti_free_src_cache (h_t *p);
+
+callsite_stats_t *codecti_ht_search_pc_cache (h_t *h, callsite_stats_t cs);
+callsite_stats_t *codecti_ht_search_src_cache (h_t *h, callsite_stats_t cs);
+void codecti_ht_insert_cache (h_t *h, callsite_stats_t *cs);
+void codecti_ht_gather_cache_data(h_t *h, int *count, void ***data);
 
 #if !defined(UNICOS_mp)
 

@@ -33,7 +33,6 @@ _codecti_init (char *appName)
   codecti.fullStackDepth = codecti.reportStackDepth + codecti.internalStackDepth;
   if ( codecti.fullStackDepth > CODECT_CALLSITE_STACK_DEPTH_MAX )
       codecti.fullStackDepth = CODECT_CALLSITE_STACK_DEPTH_MAX;
-  codecti.use_pc_cache = 1;
 #ifdef SO_LOOKUP
   codecti.so_info = NULL;
 #endif
@@ -42,56 +41,32 @@ _codecti_init (char *appName)
 }
 
 void
-codecti_init(char **argv) {
+codecti_init() {
   codecti.toolname = "CodeCT";
-#if defined(Linux) && ! defined(ppc64)
+
   codecti.appFullName = codecti_get_proc_exe_link ();
   codecti_msg_debug ("appFullName is %s\n", codecti.appFullName);
   _codecti_init (codecti_get_base_app_name (codecti.appFullName));
-#else
-  if (argv != NULL && *argv != NULL && **argv != NULL)
-    {
-      _codecti_init (codecti_get_base_app_name (**argv));
-      codecti.appFullName = strdup (**argv);
-    }
-  else
-    {
-      _codecti_init ("Unknown");
-      codecti_msg_debug ("argv is NULL\n");
-    }
-#endif
-  codecti_cs_cache_init();
 }
 
 void
-codecti_record_callsite (struct callsite_stats **p) {
+codecti_record_callsite (callsite_stats_t *p) {
   int ret = 0;
-  struct callsite_stats *call_stat;
   jmp_buf jb;
 
-  call_stat = calloc(1, sizeof(*call_stat));
-  if (NULL == call_stat) {
-    ret = 1;
-    goto error;
-  }
-  bzero(call_stat, sizeof(struct callsite_stats));
+  bzero(p, sizeof(p));
 
   setjmp (jb);
   codecti.inAPIrtb = 1;		/*  Used to correctly identify caller FP  */
 
-  ret = codecti_RecordTraceBack (jb, call_stat->pc, codecti.fullStackDepth);
+  ret = codecti_RecordTraceBack (jb, p->pc, codecti.fullStackDepth);
   codecti.inAPIrtb = 0;
 
-  /* here pc traceback is recorded - set a flag to search and push in pc cache */
-  codecti.use_pc_cache = 1;
-error:
-  *p = call_stat;
-  // TODO: error handling
   return;
 }
 
 void
-codecti_resolve_callsite (struct callsite_stats *p) {
+codecti_resolve_callsite (callsite_stats_t *p) {
 #ifdef ENABLE_BFD
   if (codecti.appFullName != NULL)
     {
@@ -129,49 +104,33 @@ codecti_resolve_callsite (struct callsite_stats *p) {
       codecti.do_lookup = 0;
     }
 #endif
-  codecti.use_pc_cache = 0;
 
   return;
 }
 
 void
 codecti_print_callsite (struct callsite_stats *p) {
-  codecti_profile_print (codecti.stderr_, p);
+  codecti_profile_print (codecti.stdout_, p);
   return;
 }
 
 void
-codecti_free_callsite (struct callsite_stats *p) {
-  free(p);
-  return;
-}
-
-int
-codecti_ht_insert_callsite (struct callsite_stats *p) {
-  if (codecti.use_pc_cache) {
-    return codecti_ht_insert_cs_pc_cache(p);
-  } else {
-    return codecti_ht_insert_cs_src_id_cache(p);
-  }
-}
-
-void
-codecti_serialize_callsite (struct callsite_stats *p, void **start_p, size_t *len) {
+codecti_serialize_callsite (callsite_stats_t p, void **start_p, size_t *len) {
   size_t serialized_data_sz = 0;
   char *serialized_data = NULL, *temp = NULL;
   int i;
 
   /* determine length of total buffer after flattening everything */
   for (i = 0; i < CODECT_CALLSITE_STACK_DEPTH_MAX; i++) {
-    if (NULL == p->pc[i]) {
+    if (NULL == p.pc[i]) {
       break;
     }
-    serialized_data_sz += sizeof(p->pc[i]);
+    serialized_data_sz += sizeof(p.pc[i]);
     serialized_data_sz += sizeof(size_t);
-    serialized_data_sz += strlen(p->filename[i]);
+    serialized_data_sz += strlen(p.filename[i]);
     serialized_data_sz += sizeof(size_t);
-    serialized_data_sz += strlen(p->functname[i]);
-    serialized_data_sz += sizeof(p->lineno[i]);
+    serialized_data_sz += strlen(p.functname[i]);
+    serialized_data_sz += sizeof(p.lineno[i]);
   }
 
   /* Prepare the flatten buffer */  
@@ -180,28 +139,28 @@ codecti_serialize_callsite (struct callsite_stats *p, void **start_p, size_t *le
   for (i = 0; i < CODECT_CALLSITE_STACK_DEPTH_MAX; i++) {
     size_t filename_len, functname_len;
 
-    if (NULL == p->pc[i]) {
+    if (NULL == p.pc[i]) {
       break;
     }
-    memcpy(temp, (char *)&p->pc[i], sizeof(p->pc[i]));
-    temp += sizeof(p->pc[i]);
+    memcpy(temp, (char *)&p.pc[i], sizeof(p.pc[i]));
+    temp += sizeof(p.pc[i]);
 
-    filename_len = strlen(p->filename[i]);
+    filename_len = strlen(p.filename[i]);
     memcpy(temp, (char *)&filename_len, sizeof(size_t));
     temp += sizeof(size_t);
 
-    memcpy(temp, (char *)p->filename[i], strlen(p->filename[i]));
-    temp += strlen(p->filename[i]);
+    memcpy(temp, (char *)p.filename[i], strlen(p.filename[i]));
+    temp += strlen(p.filename[i]);
 
-    functname_len = strlen(p->functname[i]);
+    functname_len = strlen(p.functname[i]);
     memcpy(temp, (char *)&functname_len, sizeof(size_t));
     temp += sizeof(size_t);
 
-    memcpy(temp, (char *)p->functname[i], strlen(p->functname[i]));
-    temp += strlen(p->functname[i]);
+    memcpy(temp, (char *)p.functname[i], strlen(p.functname[i]));
+    temp += strlen(p.functname[i]);
 
-    memcpy(temp, (char *)&p->lineno[i], sizeof(p->lineno[i]));
-    temp += sizeof(p->lineno[i]);
+    memcpy(temp, (char *)&p.lineno[i], sizeof(p.lineno[i]));
+    temp += sizeof(p.lineno[i]);
   }
 
   *start_p = (void *)serialized_data;
@@ -210,7 +169,7 @@ codecti_serialize_callsite (struct callsite_stats *p, void **start_p, size_t *le
 }
 
 void
-codecti_deserialize_callsite (void *start_p, size_t len, struct callsite_stats **p) {
+codecti_deserialize_callsite (void *start_p, size_t len, callsite_stats_t *p) {
   struct callsite_stats *cs = NULL;
   char *temp = NULL;
   size_t temp_len = 0;
@@ -253,15 +212,235 @@ codecti_deserialize_callsite (void *start_p, size_t len, struct callsite_stats *
 
   assert(len == temp_len);
 
-  *p = cs;
+  (*p) = (*cs);
   return;
+}
+
+void codecti_copy_pc_cs(callsite_stats_t *new_cs, callsite_stats_t pc_cs) {
+  int i;
+  for (i = 0; (i < codecti.fullStackDepth) && (pc_cs.pc[i] != NULL); i++) {
+    new_cs->filename[i] = NULL;
+    new_cs->functname[i] = NULL;
+    new_cs->lineno[i] = 0;
+    new_cs->pc[i] = pc_cs.pc[i]; // Only this field is relevent here
+  }
+}
+
+void codecti_copy_src_cs(callsite_stats_t *new_cs, callsite_stats_t src_cs) {
+  int i;
+  for (i = 0; (i < codecti.fullStackDepth) && (src_cs.filename[i] != NULL); i++) {
+    new_cs->filename[i] = strdup (src_cs.filename[i]);
+    new_cs->functname[i] = strdup (src_cs.functname[i]);
+    new_cs->lineno[i] = src_cs.lineno[i];
+    new_cs->pc[i] = src_cs.pc[i];
+  }
 }
 
 void
 codecti_fini () {
-  codecti_free_pc_cache();
-  codecti_free_src_id_cache();
-  codecti_cs_cache_fini();
+  return;
+}
+
+/* Hash table func */
+
+/* Changed this comparator to compare the enire pc list*/
+static int
+callsite_pc_cache_comparator (const void *p1, const void *p2)
+{
+  int i;
+  callsite_pc_cache_entry_t *cs1 = (callsite_pc_cache_entry_t *) p1;
+  callsite_pc_cache_entry_t *cs2 = (callsite_pc_cache_entry_t *) p2;
+
+  for (i = 0; (i < codecti.fullStackDepth) && (cs1->pc[i] != NULL); i++)
+  {
+    if ((long) cs1->pc[i] > (long) cs2->pc[i])
+  	{
+  	  return 1;
+  	}
+    if ((long) cs1->pc[i] < (long) cs2->pc[i])
+  	{
+  	  return -1;
+  	}
+  
+  }
+
+  return 0;
+}
+
+/* Changed this to take account of entire PC list */
+static int
+callsite_pc_cache_hashkey (const void *p1)
+{
+  int i, res = 0;
+  callsite_pc_cache_entry_t *cs1 = (callsite_pc_cache_entry_t *) p1;
+
+  for (i = 0; (i < codecti.fullStackDepth) && (cs1->pc[i] != NULL); i++)
+  {
+    res ^= ((long) cs1->pc[i]);
+  }
+  return 662917 ^ res;
+}
+
+static int
+callsite_src_id_cache_comparator (const void *p1, const void *p2)
+{
+  int i;
+  callsite_src_id_cache_entry_t *csp_1 = (callsite_src_id_cache_entry_t *) p1;
+  callsite_src_id_cache_entry_t *csp_2 = (callsite_src_id_cache_entry_t *) p2;
+
+#define express(f) {if ((csp_1->f) > (csp_2->f)) {return 1;} if ((csp_1->f) < (csp_2->f)) {return -1;}}
+  if (codecti.reportStackDepth == 0)
+    {
+      return 0;
+    }
+  else
+    {
+      for (i = 0; (i < codecti.fullStackDepth) && (csp_1->filename[i] != NULL); i++)
+        {
+          if (csp_1->filename[i] != NULL && csp_2->filename[i] != NULL)
+            {
+              if (strcmp (csp_1->filename[i], csp_2->filename[i]) > 0)
+                {
+                  return 1;
+                }
+              if (strcmp (csp_1->filename[i], csp_2->filename[i]) < 0)
+                {
+                  return -1;
+                }
+              express (lineno[i]);
+              if (strcmp (csp_1->functname[i], csp_2->functname[i]) > 0)
+                {
+                  return 1;
+                }
+              if (strcmp (csp_1->functname[i], csp_2->functname[i]) < 0)
+                {
+                  return -1;
+                }
+            }
+        }
+    }
+#undef express
+  return 0;
+}
+
+static int
+callsite_src_id_cache_hashkey (const void *p1)
+{
+  int i, j;
+  int res = 0;
+  callsite_src_id_cache_entry_t *cs1 = (callsite_src_id_cache_entry_t *) p1;
+
+  for (i = 0; (i < codecti.fullStackDepth) && (cs1->filename[i] != NULL); i++)
+    {
+      if (cs1->filename[i] != NULL)
+        {
+          for (j = 0; cs1->filename[i][j] != '\0'; j++)
+            {
+              res ^= (unsigned) cs1->filename[i][j];
+            }
+          for (j = 0; cs1->functname[i][j] != '\0'; j++)
+            {
+              res ^= (unsigned) cs1->functname[i][j];
+            }
+        }
+      res ^= cs1->lineno[i];
+    }
+  return 662917 ^ res;
+}
+
+void codecti_pc_cs_cache_init(h_t **p)
+{
+  (*p) = h_open (codecti.tableSize,
+                 callsite_pc_cache_hashkey,
+                 callsite_pc_cache_comparator);
+}
+
+void codecti_src_cs_cache_init(h_t **p)
+{
+  (*p) = h_open (codecti.tableSize,
+                 callsite_src_id_cache_hashkey,
+                 callsite_src_id_cache_comparator);
+}
+
+struct callsite_stats *codecti_ht_search_pc_cache (h_t *h, callsite_stats_t cs) {
+  int i;
+  callsite_pc_cache_entry_t *csp;
+  callsite_pc_cache_entry_t key = {0};
+
+  for (i = 0; (i < codecti.fullStackDepth) && (cs.pc[i] != NULL); i++) {
+    key.filename[i] = NULL;
+    key.functname[i] = NULL;
+    key.lineno[i] = 0;
+    key.pc[i] = cs.pc[i];
+  }
+
+  if(h_search (h, &cs, (void **) &csp) == NULL) {
+    return NULL;
+  } else {
+    return csp;
+  }
+}
+
+struct callsite_stats *codecti_ht_search_src_cache (h_t *h, callsite_stats_t cs) {
+  int i;
+  callsite_src_id_cache_entry_t *csp;
+  callsite_src_id_cache_entry_t key = {0};
+
+  for (i = 0; (i < codecti.fullStackDepth) && (cs.pc[i] != NULL); i++) {
+    key.filename[i] = cs.filename[i];
+    key.functname[i] = cs.functname[i];
+    key.lineno[i] = cs.lineno[i];
+    key.pc[i] = cs.pc[i];
+  }
+
+  if(h_search (h, &cs, (void **) &csp) == NULL) {
+    return NULL;
+  } else {
+    return csp;
+  }
+}
+
+void codecti_ht_insert_cache (h_t *h, callsite_stats_t *cs) {
+    h_insert (h, cs);
+    return;
+}
+
+void codecti_ht_gather_cache_data(h_t *h, int *count, void ***data) {
+  h_gather_data(h, count, data);
+  return;
+}
+
+void
+codecti_free_pc_cache(h_t *p) {
+  if (NULL != p) {
+      int ac, ndx;
+      callsite_pc_cache_entry_t **av;
+
+      h_drain(p, &ac, (void ***)&av);
+      for (ndx = 0; ndx < ac; ndx++)
+        {
+          free(av[ndx]);
+        }
+      h_close(p);
+      free(av);
+    }
+  return;
+}
+
+void
+codecti_free_src_cache (h_t *p) {
+  if (NULL != p) {
+      int ac, ndx;
+      callsite_src_id_cache_entry_t **av;
+
+      h_drain(p, &ac, (void ***)&av);
+      for (ndx = 0; ndx < ac; ndx++)
+        {
+          free(av[ndx]);
+        }
+      free(av);
+      h_close(p);
+    }
   return;
 }
 

@@ -10,27 +10,13 @@
 #define CODECTCALLSITES_H
 
 #include "codect-config.h"
-
+#include "codect-API.h"
 /* Callsite statistics */
-typedef struct callsite_stats
-{
-  void *pc[CODECT_CALLSITE_STACK_DEPTH_MAX];
-  char *filename[CODECT_CALLSITE_STACK_DEPTH_MAX];
-  char *functname[CODECT_CALLSITE_STACK_DEPTH_MAX];
-  int lineno[CODECT_CALLSITE_STACK_DEPTH_MAX];
-} callsite_stats_t;
-
-/* Cache init and free*/
-void codecti_cs_cache_init();
-int codecti_ht_insert_cs_pc_cache (struct callsite_stats *p);
-int codecti_ht_insert_cs_src_id_cache (struct callsite_stats *p);
-void codecti_free_pc_cache();
-void codecti_free_src_id_cache ();
-void codecti_cs_cache_fini();
+typedef struct callsite_stats callsite_stats_t;
 
 /* Translate callstats record (the pc) to src file, line.
  */
-int codecti_query_src (callsite_stats_t * p);
+int codecti_query_src (callsite_stats_t *p);
 
 #endif // CODECTCALLSITES_H
 
