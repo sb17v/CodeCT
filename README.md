@@ -1,5 +1,4 @@
-# CodeCT 0.1
-Lightweight Code Callsite Tracing library
+# CodeCT
 <img width="498" alt="CodeCT_logo" src="https://github.com/sb17v/CodeCT/assets/35857453/e8e848a9-9ff4-4f07-8c89-555cdf48c9e4">
 
 ## Introduction
