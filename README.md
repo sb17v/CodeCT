@@ -1,91 +1,27 @@
 # CodeCT 0.1
-Lightweight Code Callstack Tracing library
-//TODO: Fix this file
+Lightweight Code Callsite Tracing library
+<img width="498" alt="CodeCT_logo" src="https://github.com/sb17v/CodeCT/assets/35857453/e8e848a9-9ff4-4f07-8c89-555cdf48c9e4">
 
 ## Introduction
-mpiP is a light-weight profiling library for MPI applications. Because it only collects statistical information about MPI functions, mpiP generates considerably less overhead and much less data than tracing tools. All the information captured by mpiP is task-local. It only uses communication during report generation, typically at the end of the experiment, to merge results from all of the tasks into one output file.
+CodeCT - the low-level lightweight profiling tool that helps you examine large and complex applications. With an easy-to-use API, you can capture and print call sites and perform targeted profiling without in-depth knowledge of the entire code flow.
+CodeCT seamlessly integrates with both standalone and distributed applications.
 
-## Downloading
-The current version of mpiP can be accessed at [https://github.com/LLNL/mpiP/releases/latest](https://github.com/LLNL/mpiP/releases/latest).
+## Features
+- Accurate callsite information across your entire code stack
+- The ability to enable targeted profiling
+- Detection of unique callsite per operation (even in distributed setup)
+- Marshalling/unmarshalling of callsite information
+- Easy extension to capture timing information along with callsite
 
-## New Features & Bug Fixes
-Version 3.5 includes several new features, including
-
-- Multi-threaded support
-- Additional MPI-IO functions
-- Various updates including
-  - New configuration options and tests
-  - Updated test suite
-  - Updated build behavior
-
-Please see the ChangeLog for additional changes.
-
-##  Configuring and Building mpiP
-### Dependencies
-- MPI installation
-- libunwind : for collecting stack traces.  
-- binutils : for address to source translation
-- glibc backtrace() can also be usef for stack tracing, but source line numbers may be inconsistent.
-
-### Configuration
-Several specific configuration flags can be using, as provided by ```./configure -h```.
-Standard configure flags, such as CC, can be used for specifying MPI compiler wrapper scripts.
-
-### Build Make Targets
-|Target|Effect|
-|---|---|
-|[default]| Build libmpiP.so|
-|all|Build shared library and all tests|
-|check|Use dejagnu to run and evaluate tests|
-
-## Using mpiP
-Using mpiP is very simple. Because it gathers MPI information through the MPI profiling layer, mpiP is a link time library. That is, you don't have to recompile your application to use mpiP. Note that you might have to recompile to include the '-g' option. This is important if you want mpiP to decode the PC to a source code filename and line number automatically. mpiP will work without -g, but mileage may vary.
-
-### Instrumentation
-#### Link Time Instrumentation
-Link the mpiP library with an executable. The dependent libraries may need to be specified as well.  If the link command includes the MPI library, order the mpiP library before the MPI library, as in ``` -lmpiP -lmpi```.
-
-#### Run Time Instrumentation
-An uninstrumented executable may able to be instrumented at run time by setting the LD_PRELOAD environment variable, as in ```export LD_PRELOAD=[path to mpiP]/libmpiP.so```.  Preloading libmpiP can possibly interfere with the launcher and may need to be specified on the launch command, such as ```srun -n 2 --export=LD_PRELOAD=[path to mpiP]/libmpiP.so [executable]```.
-
-### mpiP Run Time Flags
-The behavior of mpiP can be set at run time through the use of the following flags.  Multiple flags can be delimited with spaces or commas.
-
-|Option|	Description|	Default|
-|---|---|---|
-|-c	| Generate concise version of report, omitting callsite process-specific detail.||
-|-d	|Suppress printing of callsite detail sections.||
-|-e|Print report data using floating-point format.  |
-|-f dir| Record output file in directory \<dir>. |.|
-|-g|Enable mpiP debug mode.| disabled|
-|-k n |Sets callsite stack traceback depth to <n>.| 1|
-|-l|Use less memory to generate the report by using MPI collectives to generate callsite information on a callsite-by-callsite basis.  |
-|-n|Do not truncate full pathname of filename in callsites.  |
-|-o|Disable profiling at initialization. Application must enable profiling with MPI_Pcontrol().  |
-|-p|Point-to-point histogram reporting on message size and communicator used.|
-|-r|Generate the report by aggregating data at a single task. |default|
-|-s n|Set hash table size to \<n>. |256|
-|-t x|Set print threshold for report, where \<x> is the MPI percentage of time for each callsite. |0.0|
-|-v|Generates both concise and verbose report output.  |
-|-x exe |Specify the full path to the executable.  |
-|-y|Collective histogram reporting on message size and communicator used.|
-|-z|Suppress printing of the report at MPI_Finalize.  |
-	
-For example, to set the callsite stack walking depth to 2 and the report print threshold to 10%, you simply need to define the mpiP string in your environment, as in any of the following examples:
-
+##  Configuring and Building CodeCT
 ```
-$ export MPIP="-t 10.0 -k 2" (bash)
-
-$ export MPIP=-t10.0,-k2 (bash)
-
-$ setenv MPIP "-t 10.0 -k 2" (csh)
+./configure --prefix=<installation_location>
+make all
+make install
 ```
-
-mpiP prints a message at initialization if it successfully finds the MPIP variable.
-
-For more information on mpiP, please see the User Guide in the mpiP distribution.
-
 ## License
+Copyright (C) NVIDIA 2024.  ALL RIGHTS RESERVED.
+
 Copyright (c) 2006, The Regents of the University of California.
 Produced at the Lawrence Livermore National Laboratory
 Written by Jeffery Vetter and Christopher Chambreau.
