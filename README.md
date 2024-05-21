@@ -14,9 +14,9 @@ CodeCT seamlessly integrates with both standalone and distributed applications.
 
 ##  Configuring and Building CodeCT
 ```
+autoconf
 ./configure --prefix=<installation_location>
-make all
-make install
+make -j install
 ```
 ## License
 Copyright (C) NVIDIA 2024.  ALL RIGHTS RESERVED.
